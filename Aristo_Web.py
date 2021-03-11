@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, session, url_for, flash
+from flask import render_template, request, redirect, session, url_for, flash
 from Workers import *
 from aristoDB import *
 import time
