@@ -3,6 +3,7 @@ import random
 from datetime import datetime
 import numpy as np
 from tqdm import tqdm
+from aristoDB import *
 
 
 def enter_tenders_to_db(Tenders,db,number_of_tenders_to_add):

@@ -1,12 +1,21 @@
-from flask_sqlalchemy import SQLAlchemy
 from flask import Flask
+from flask_sqlalchemy import SQLAlchemy
+from datetime import timedelta
+import time
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder='templates',
+            static_folder=r'C:\Users\itay dar\Desktop\פרויקטים\tender\hello_flask\templates')
+app.secret_key = "tenderly_secret_key"  # secret app for the session to keep data
+app.permanent_session_lifetime = timedelta(minutes=5)  # time untill user forced to log out
 
+'''
+config the connection to mysql database
+'''
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://itda:28031994@127.0.0.1:3306/new_tender'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)  # create connection with database
+
 
 
 class User(db.Model):
@@ -119,8 +128,7 @@ class Task(db.Model):
 
 
 
-    def __init__(self, task_id, tender_id, odt, deadline, finish, status, subject, description):
-        self.task_id = task_id
+    def __init__(self, tender_id, odt, deadline, finish, status, subject, description):
         self.tender_id = tender_id
         self.odt = odt
         self.deadline = deadline
@@ -141,14 +149,15 @@ class TaskLog(db.Model):
         user_id eddited status = "נעה לוי שינתה את סטטוס המשימה"
         ....
     """
-    _tablename_ = "TasksLogs"
+    __tablename__ = "TasksLogs"
 
     user_id = db.Column(db.Integer, db.ForeignKey("Users.id"), primary_key=True)
     init_time = db.Column(db.DateTime(255), primary_key=True)
     task_id = db.Column(db.Integer, db.ForeignKey("Tasks.task_id"))
     description = db.Column(db.VARCHAR(255), nullable=False)
 
-    def __init__(self, task_id, init_time, description):
+    def __init__(self,user_id, task_id, init_time, description):
+        self.user_id = user_id
         self.task_id = task_id
         self.init_time = init_time
         self.description = description
@@ -158,7 +167,7 @@ class TaskNote(db.Model):
     """
     description
     """
-    _tablename_ = "TasksNotes"
+    __tablename__ = "TasksNotes"
 
     user_id = db.Column(db.Integer, db.ForeignKey("Users.id"), primary_key=True)
     time = db.Column(db.DateTime(255), primary_key=True)
@@ -182,7 +191,7 @@ class UserInTask(db.Model):
                 Permissions - the user's premissions
     '''
 
-    _tablename_ = "UsersInTasks"
+    __tablename__ = "UsersInTasks"
 
     task_id = db.Column(db.Integer, db.ForeignKey('Tasks.task_id'), primary_key=True, nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('Users.id'), primary_key=True, nullable=False)
@@ -240,3 +249,9 @@ class TaskDependency(db.Model):
     def __init__(self, blocked, blocking):
         self.blocked = blocked
         self.blocking = blocking
+
+def get_db():
+    return db
+
+def get_app():
+    return app
