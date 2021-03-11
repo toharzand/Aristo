@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+{% block title %}about{% endblock %}
+{% block content %}
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+body {
+  font-family: Arial, Helvetica, sans-serif;
+  margin: 0;
+}
+
+html {
+  box-sizing: border-box;
+}
+
+*, *:before, *:after {
+  box-sizing: inherit;
+}
+
+.column {
+  float: left;
+  width: 33.3%;
+  margin-bottom: 16px;
+  padding: 0 8px;
+}
+
+.card {
+  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+  margin: 8px;
+}
+
+.about-section {
+  padding: 50px;
+  text-align: center;
+  background-color: #474e5d;
+  color: white;
+}
+
+.container {
+  padding: 0 16px;
+}
+
+.container::after, .row::after {
+  content: "";
+  clear: both;
+  display: table;
+}
+
+.title {
+  color: grey;
+}
+
+.button {
+  border: none;
+  outline: 0;
+  display: inline-block;
+  padding: 8px;
+  color: white;
+  background-color: #4169E1;
+  text-align: center;
+  cursor: pointer;
+  width: 20%;
+  border-radius: 50px;
+}
+
+.button:hover {
+  background-color: #555;
+}
+
+@media screen and (max-width: 650px) {
+  .column {
+    width: 100%;
+    display: block;
+  }
+}
+</style>
+
+
+</head>
+<body>
+<div class="about-section" align="center" dir="rtl">
+  <h1>להפוך את הבירוקרטיה לידידותית</h1>
+  <p>אנחנו ב-tenderly שואפים לשנות את כל מה שידעתם עד היום על עולם ניהול המכרזים</p>
+  <p>ולהעניק פיתרון מקצה לקצה שיחסוך זמן, כסף ומשאבי אנוש.</p>
+</div>
+<h2 style="text-align:center">הצוות האדיר</h2>
+<div class="row">
+  <div class="column">
+    <div class="card">
+      <img src="templates/img/bot.jpg" alt="itay" style="width:100%">
+      <div class="container">
+        <h2>איתי דר</h2>
+        <p class="title">CEO/Data engineer</p>
+        <p>סטונדט שנה שנייה באוניברסיטת בן גוריון</p>
+        <p>jane@example.com</p>
+        <p align="left"><button class="button">Contact via Linkedin</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="column">
+    <div class="card">
+      <img src="templates/img/bot.JPG" alt="Mike" style="width:100%">
+      <div class="container">
+        <h2>Mike Ross</h2>
+        <p class="title">Art Director</p>
+        <p>Some text that describes me lorem ipsum ipsum lorem.</p>
+        <p>mike@example.com</p>
+        <p align="left"><button class="button">Contact via Linkedin</button>
+
+      </div>
+    </div>
+  </div>
+  <div class="column">
+    <div class="card">
+      <img src="templates/img/bot.JPG" alt="John" style="width:100%">
+      <div class="container">
+        <h2>John Doe</h2>
+        <p class="title">Designer</p>
+        <p>Some text that describes me lorem ipsum ipsum lorem.</p>
+        <p>john@example.com</p>
+        <p align="left"><button class="button">Contact via Linkedin</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+
+{% endblock %}

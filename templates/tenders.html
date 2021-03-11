@@ -1,0 +1,199 @@
+{% extends "base.html" %}
+{% block title %}tenders{% endblock %}
+
+{% block content %}
+
+<style>
+table, th, td {
+  border: 1px solid #ddd;
+  border-collapse: collapse;
+  text-align: center;
+}
+
+th {
+  background-color: #4CAF50;
+  color: white;
+  padding: 12px
+}
+
+div {
+    background-color: #e2e2e2;
+    }
+
+
+input[type=submit] {
+  width: 10%;
+  background-color: #4CAF50;
+  color: white;
+  padding: 14px 20px;
+  margin: 8px 0;
+  border: none;
+  border-radius: 30px;
+  cursor: pointer;
+  text-align: center;
+}
+
+input[type=submit]:hover {
+  background-color: #45a049;
+}
+
+.button {
+  border: none;
+  color: white;
+  padding: 10px 26px;
+  text-align: center;
+  text-decoration: none;
+  display: block;
+  font-size: 16px;
+  margin: auto;
+  cursor: pointer;
+
+}
+
+.button1 {background-color: #e2e2e2;} /* Green */
+
+/* Dropdown Button */
+.dropbtn {
+  background-color: #4CAF50;
+  color: white;
+  padding: 16px;
+  font-size: 16px;
+  border: none;
+}
+
+/* The container <div> - needed to position the dropdown content */
+.dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+/* Dropdown Content (Hidden by Default) */
+.dropdown-content {
+  display: none;
+  position: absolute;
+  background-color: #f1f1f1;
+  min-width: 160px;
+  box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+  z-index: 1;
+}
+
+/* Links inside the dropdown */
+.dropdown-content input{
+  color: black;
+  padding: 12px 10px;
+  display: block;
+  background-color: #f1f1f1;
+  float:right;
+  border-radius: 0px;
+  width:100%;
+}
+
+/* Change color of dropdown links on hover */
+.dropdown-content input:hover {background-color: #ddd;}
+
+/* Show the dropdown menu on hover */
+.dropdown:hover .dropdown-content {display: block;}
+
+/* Change the background color of the dropdown button when the dropdown content is shown */
+.dropdown:hover .dropbtn {background-color: #3e8e41;}
+
+
+</style>
+<p>&nbsp;</p>
+
+<form action="#" method="post" dir="rtl">
+    <div>
+        <input type="submit" name="new_tender" id = "new_tender" value="יצירת מכרז חדש +">
+            <div class="dropdown" dir="rtl" style="float:left; border-radius: 10px;margin-left:5em">
+                  <button class="dropbtn" name="sort" id="sort">מיון</button>
+                    <div class="dropdown-content">
+                    <input type="submit" name="subject" id = "subject" value="נושא המכרז">
+                    <input type="submit" name="start_date" id = "start_date" value="תאריך התחלה">
+                    <input type="submit" name="department" id = "department" value="מחלקה">
+<!--                    <a href="#" name="some">נושא המכרז</a>-->
+<!--                    <a href="#">תאריך התחלה</a>-->
+<!--                    <a href="#">מחלקה</a>-->
+                    </div>
+            </div>
+            <div class="dropdown" dir="rtl" style="float:left; border-radius: 10px;margin-left:5em">
+                  <button class="dropbtn" >סינון</button>
+                    <div class="dropdown-content">
+                    <a href="/">Link 1</a>
+                    <a href="#">Link 2</a>
+                    <a href="#">Link 3</a>
+             </div>
+        </div>
+    </div>
+</form>
+
+
+
+<form action="#" method="post">
+<div dir="rtl" align="center">
+<h1 align="center">מכרזים</h1>
+<table style="width:100%">
+  <tr>
+
+    <th>לחץ לצפייה במכרז</th>
+    <th>פרוטוקול מכרז</th>
+      <th>סטטוס התקדמות</th>
+    <th >ועדת מכרזים</th>
+    <th>סוג ההליך</th>
+    <th>נושא המכרז</th>
+    <th>מחלקה</th>
+    <th>איש קשר מטעם המחלקה</th>
+    <th>מנהל המכרז</th>
+    <th>תאריך התחלה</th>
+      <th>תאריך סיום משוער</th>
+      <th>זמן באוויר</th>
+
+  </tr>
+{% for i in range(0,len) %}
+    <tr>
+        <td>
+            <button type="submit"  name="user"  value="{{values[i][10]}}" align="center" id="{{values[i][10]}}" class="button button1" style="color:#e2e2e2">&#128994;</button>
+        </td>
+        <td>{{values[i][0]}}</td>
+                    {% if values[i][9] < 7 %}
+        <td class="progress-bar progress-bar-success" role="progressbar" aria-valuenow="95"
+  aria-valuemin="0" aria-valuemax="100" style="width:95%" align="right">
+            95%
+        </td>
+    {% elif values[i][9] > 7 and values[i][9] < 20 %}
+                <td class="progress-bar progress-bar-info" role="progressbar" aria-valuenow="70"
+  aria-valuemin="0" aria-valuemax="100" style="width:70%">
+            70%
+        </td>
+    {% elif values[i][9] > 20 and values[i][9] < 25 %}
+                <td class="progress-bar progress-bar-warning" role="progressbar" aria-valuenow="40"
+  aria-valuemin="0" aria-valuemax="100" style="width:40%">
+            40%
+        </td>
+    {% else %}
+                <td class="progress-bar progress-bar-danger" role="progressbar" aria-valuenow="20"
+  aria-valuemin="0" aria-valuemax="100" style="width:20%">
+            10%
+        </td>
+        {% endif %}
+        <td>{{values[i][1]}}</td>
+        <td>{{values[i][2]}}</td>
+        <td>{{values[i][3]}}</td>
+        <td>{{values[i][4]}}</td>
+        <td>{{values[i][5]}}</td>
+        <td>{{values[i][6]}}</td>
+        <td>{{values[i][7]}}</td>
+        <td>{{values[i][8]}}</td>
+        <td>{{values[i][9]}}</td>
+
+    </tr>
+{% endfor %}
+</table>
+</div>
+</form>
+
+
+
+
+
+
+{% endblock %}
