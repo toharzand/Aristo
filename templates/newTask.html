@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+{% block title %}tender{% endblock %}
+
+{% block content %}
+
+<style>
+
+input[type=date] {
+  width: 20%;
+  padding: 12px 20px;
+  margin: 8px 0;
+  display: inline-block;
+  border: 3px solid #ccc;
+  border-radius: 50px;
+  box-sizing: border-box;
+}
+
+input[type=file] {
+  width: 20%;
+  padding: 12px 20px;
+  margin: 8px 0;
+  display: inline-block;
+  border: 3px solid #ccc;
+  border-radius: 50px;
+  box-sizing: border-box;
+}
+
+input[type=email] {
+  width: 20%;
+  padding: 12px 20px;
+  margin: 8px 0;
+  display: inline-block;
+  border: 3px solid #ccc;
+  border-radius: 50px;
+  box-sizing: border-box;
+}
+input[type=text] {
+  width: 20%;
+  padding: 12px 20px;
+  margin: 8px 0;
+  display: inline-block;
+  border: 3px solid #ccc;
+  border-radius: 50px;
+  box-sizing: border-box;
+}
+textarea {
+  width: 20%;
+  padding: 12px 20px;
+  margin: 8px 0;
+  display: inline-block;
+  border: 3px solid #ccc;
+  box-sizing: border-box;
+   border-radius: 50px;
+}
+input[type=password] {
+  width: 20%;
+  padding: 12px 20px;
+  margin: 8px 0;
+  display: inline-block;
+  border: 3px solid #ccc;
+  border-radius: 50px;
+  box-sizing: border-box;
+}
+
+input[type=submit] {
+  width: 25%;
+  background-color: #4CAF50;
+  color: white;
+  padding: 14px 20px;
+  margin: 8px 0;
+  border: none;
+  border-radius: 30px;
+  cursor: pointer;
+   font-size: 16px;
+
+}
+input[type=button] {
+  width: 20%;
+  padding: 12px 20px;
+  margin: 8px 0;
+  display: inline-block;
+  border: 3px solid #ccc;
+  border-radius: 50px;
+  box-sizing: border-box;
+}
+
+input[type=submit]:hover {
+  background-color: #45a049;
+}
+
+div {
+  background-color: #f2f2f2;
+  padding: 0px;
+}
+
+select {
+  width: 20%;
+  padding: 12px 20px;
+  margin: 8px 0;
+  display: inline-block;
+  border: 3px solid #ccc;
+  border-radius: 50px;
+  box-sizing: border-box;
+}
+
+.button {
+  border: none;
+  color: white;
+  padding: 15px 32px;
+  text-align: center;
+  text-decoration: none;
+  display: block;
+  font-size: 16px;
+  margin: auto;
+  cursor: pointer;
+  border-radius: 50px
+}
+
+.button1 {background-color: #4CAF50;} /* Green */
+
+</style>
+  <form action="#" method="post" id="usrform">
+
+
+
+    <div align="center" style="padding:10px">
+        <h3 style="background-color: #f2f2f2;">הוסיפו משימה חדשה למכרז</h3>
+
+<select dir="rtl" name="status" id="status">
+    <option value="" disabled selected>סטטוס</option>
+    <option value="חסום">חסום</option>
+    <option value="בעבודה">בעבודה</option>
+    <option value="הושלם">הושלם</option>
+</select>
+
+    <input type="text" id="subject" name="subject" placeholder="נושא המשימה" dir="rtl"></div>
+
+<div align="center">
+    <input type="file" id="selectedFile" name="selectedFile" style="display: none;" />
+    <input type="button" name="task_file" id="task_file" value="+   הוסף קובץ (בחירה)" dir="rtl" onclick="document.getElementById('selectedFile').click();" />
+    <input type="text" id="users" name="users" placeholder="הוסף משתמשים" dir="rtl">
+</div>
+<div align="center">
+    <input placeholder="דד ליין למשימה" type="text" onfocus="(this.type = 'date')"  id="finish_date" name="finish_date" dir="rtl">
+</div>
+<div align="center">
+<textarea dir="rtl" id="description" name="description" rows="10">הוסף תיאור מכרז</textarea>
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            {% for msg in messages %}
+                <p align="center" style="font-size:16">{{msg}}</p>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+</div>
+
+<div align="center" dir="rtl">
+      <input type="submit" value="צור משימה" align="center">
+</div>
+  </form>
+<form action="/action_page.php">
+      <button type="submit" formaction="\home" dir="rtl" class="button button1">חזרה לעמוד הבית</button>
+</form >
+</div>
+
+
+
+
+
+{% endblock %}

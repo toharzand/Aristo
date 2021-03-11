@@ -108,7 +108,7 @@ input[type=submit]:hover {
                   <button class="dropbtn" name="sort" id="sort">מיון</button>
                     <div class="dropdown-content">
                     <input type="submit" name="subject" id = "subject" value="נושא המכרז">
-                    <input type="submit" name="start_date" id = "start_date" value="תאריך התחלה">
+                    <input type="submit" name="finish_date" id = "finish_date" value="תאריך סיום">
                     <input type="submit" name="department" id = "department" value="מחלקה">
 <!--                    <a href="#" name="some">נושא המכרז</a>-->
 <!--                    <a href="#">תאריך התחלה</a>-->
@@ -151,7 +151,7 @@ input[type=submit]:hover {
 {% for i in range(0,len) %}
     <tr>
         <td>
-            <button type="submit"  name="user"  value="{{values[i][10]}}" align="center" id="{{values[i][10]}}" class="button button1" style="color:#e2e2e2">&#128994;</button>
+            <button type="submit" name="user"  value="{{values[i][10]}}" align="center" id="{{values[i][10]}}" class="button button1" style="color:#e2e2e2">&#128994;</button>
         </td>
         <td>{{values[i][0]}}</td>
                     {% if values[i][9] < 7 %}

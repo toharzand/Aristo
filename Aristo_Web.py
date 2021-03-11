@@ -2,6 +2,7 @@ from flask import render_template, request, redirect, session, url_for, flash
 from Workers import *
 from aristoDB import *
 import time
+from datetime import datetime
 import engine
 
 
@@ -32,7 +33,6 @@ def login():
                     flash("login successfully")
                     session["user"] = user.email
                     return redirect(url_for("user"))
-            print("here")
             flash("סיסמא או מייל שגויים - לחץ על הרשמה")
         else:
             print("not in sign in - in sign up")
@@ -50,17 +50,7 @@ def login():
                             print("user is about to enter db")
                             user = User(first_name, last_name, new_email, new_pass)
                             aristo_engine.add_task(engine.AddUserTask(first_name,last_name,new_email,new_pass))
-                            # try:
-                            #     db.session.add(user)
-                            #     db.session.commit()
-                            #     flash("הרשמתך נקלטה בהצלחה, מיד תועברי לעמוד הפרופיל שלך")
-                            #     time.sleep(5)
-                            #     return redirect(url_for("user"))
-                            # except Exception as e:
-                            #     print(e)
-                            #     print("user cannot enter database")
-                            #     db.session.rollback()
-                            #     flash("תהליך יצירת משתמש נכשל - נסה שנית")
+                            return redirect(url_for("user"))
                         else:
                             flash("סיסמא חייבת להכיל אות גדולה, אות קטנה וספרה")
                     else:
@@ -69,7 +59,6 @@ def login():
                     flash("אימות סיסמא נכשל")
             except Exception as e:
                 print(e)
-    print("return")
     return render_template("login.html")
 
 
@@ -84,10 +73,8 @@ def tenders():
         session.permanent = True
         try:
             req = request.form['user']
-            tender_to_show = Tender.query.filter_by(tid=req).first()
-            contact_guy = User.query.filter_by(id=tender_to_show.contact_user_from_department).first()
-            return render_template("tender.html", tender=tender_to_show,contact_guy=contact_guy)
-        except Exception as e:
+            return redirect(url_for("tender",tender=req))
+        except:
             try:
                 req = request.form['new_tender']
                 return redirect(url_for("newTender"))
@@ -101,8 +88,8 @@ def tenders():
                     return render_template("tenders.html",values=values,len=len(values))
                 except Exception as e:
                     try:
-                        req = ('start_date',request.form['start_date'])
-                        tenders = Tender.query.order_by(Tender.start_date.desc()).all()
+                        req = ('finish_date',request.form['finish_date'])
+                        tenders = Tender.query.order_by(Tender.finish_date.asc()).all()
                         values = return_values(tenders)
                         return render_template("tenders.html", values=values, len=len(values))
                     except Exception as e:
@@ -153,10 +140,62 @@ def newTender():
     return render_template("newTender.html")
 
 
+
+
+
+
+
+@app.route("/newTask",methods=["POST", "GET"])
+def newTask():
+    if request.method == "POST":
+        session.permanent = True
+        try:
+            subject = request.form['subject']
+            users = request.form['users']
+            description = request.form['description']
+            deadline = request.form['finish_date']
+            if subject == "" or users == "" or description == "" or deadline == "" :
+                flash("נא למלא את כל שדות החובה")
+            else:
+                try:
+                    task_file = request.form['task_file']
+                except Exception as e:
+                    task_file = None
+            try:
+                status = request.form['status']
+            except:
+                status = 'פתוח'
+
+            # add task to database
+            tender_id = 15
+            odt = datetime.now()
+            finish = None
+            task = Task(tender_id, odt, deadline, finish, status, subject, description)
+            try:
+                db.session.add(task)
+                db.session.commit()
+            except:
+                print("not able to insert to db")
+                db.session.rollback()
+
+        except Exception as e:
+            print(e)
+
+    print("here")
+    return render_template("newTask.html")
+
+
+
 @app.route("/tender/<tender>", methods=["POST", "GET"])
 def tender(tender):
-    print("heree")
-    return render_template("tender.html", tender=tender)
+    print("enter")
+    if request.method == 'POST':
+        session.permanent = True
+        return redirect(url_for("newTask"))
+    tender = Tender.query.filter_by(tid=(tender)).first()
+    contact_guy = User.query.filter_by(id=tender.contact_user_from_department).first()
+    return render_template("tender.html", tender=tender,contact_guy=contact_guy)
+
 
 
 @app.route("/about")
