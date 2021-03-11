@@ -63,7 +63,14 @@ class AddUserTask(MFTask):
         self.email = email
 
     def process(self):
-        pass
+        db = get_db()
+        try:
+            orm_user = User(self.first_name,self.last_name,self.email,self.password)
+            db.session.add()
+            db.session.commit()
+        except:
+            get_db().session.rollback()
+            print("user adding denied", print(self))
 
 
 
