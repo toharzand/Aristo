@@ -2,9 +2,12 @@ from flask import render_template, request, redirect, session, url_for, flash
 from Workers import *
 from aristoDB import *
 import time
+import engine
+
 
 app = get_app()
 db = get_db()
+aristo_engine = engine.Engine(db)
 
 @app.route("/")
 @app.route("/home")
@@ -40,21 +43,24 @@ def login():
             new_email = request.form['new_email']
             try:
                 if new_pass == verify_pass:
-                    if validate_email(new_email):
+                    emails = [u.email for u in User.query.all()]
+                    if validate_email(new_email) and new_email not in emails:
                         if validate_password(new_pass):
+                            print(validate_password(new_pass))
                             print("user is about to enter db")
                             user = User(first_name, last_name, new_email, new_pass)
-                            try:
-                                db.session.add(user)
-                                db.session.commit()
-                                flash("הרשמתך נקלטה בהצלחה, מיד תועברי לעמוד הפרופיל שלך")
-                                time.sleep(5)
-                                return redirect(url_for("user"))
-                            except Exception as e:
-                                print(e)
-                                print("user cannot enter database")
-                                db.session.rollback()
-                                flash("תהליך יצירת משתמש נכשל - נסה שנית")
+                            aristo_engine.add_task(engine.AddUserTask(first_name,last_name,new_email,new_pass))
+                            # try:
+                            #     db.session.add(user)
+                            #     db.session.commit()
+                            #     flash("הרשמתך נקלטה בהצלחה, מיד תועברי לעמוד הפרופיל שלך")
+                            #     time.sleep(5)
+                            #     return redirect(url_for("user"))
+                            # except Exception as e:
+                            #     print(e)
+                            #     print("user cannot enter database")
+                            #     db.session.rollback()
+                            #     flash("תהליך יצירת משתמש נכשל - נסה שנית")
                         else:
                             flash("סיסמא חייבת להכיל אות גדולה, אות קטנה וספרה")
                     else:
@@ -90,23 +96,21 @@ def tenders():
                 print("here you need to sort/filter")
                 try:
                     req = ('subject',request.form['subject'])
-                    print("req")
-                    tender = Tender.query.order_by(Tender.subject.desc()).all()
-                    print(tender.query.first())
-                    return render_template("home.html")
-                except:
+                    tenders = Tender.query.order_by(Tender.subject.desc()).all()
+                    values = return_values(tenders)
+                    return render_template("tenders.html",values=values,len=len(values))
+                except Exception as e:
                     try:
-                        req = ('subject',request.form['start_date'])
-                        Tender.query.order_by(Tender.start_date.desc()).all()
-                    except:
-                        req = ('subject',request.form['department'])
-                        Tender.query.order_by(Tender.department.desc()).all()
-
-
-
-            # values = function_for_sorting(request,Tender,db)
-            #     return render_template("tenders.html", values=values, len=len(values))
-    values = return_values(User,Tender)
+                        req = ('start_date',request.form['start_date'])
+                        tenders = Tender.query.order_by(Tender.start_date.desc()).all()
+                        values = return_values(tenders)
+                        return render_template("tenders.html", values=values, len=len(values))
+                    except Exception as e:
+                        req = ('department',request.form['department'])
+                        tenders = Tender.query.order_by(Tender.department.desc()).all()
+                        values = return_values(tenders)
+                        return render_template("tenders.html", values=values, len=len(values))
+    values = return_values(tenders=Tender.query.all())
     return render_template("tenders.html", values=values, len=len(values))
 
 
@@ -166,4 +170,5 @@ def test():
 
 if __name__ == '__main__':
     db.create_all()
+    aristo_engine.initiate()
     app.run(debug=True)

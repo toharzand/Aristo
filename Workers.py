@@ -55,13 +55,13 @@ def datetime_to_str(date):
 def str_to_datetime(string):
     return datetime.strptime(string,'%Y-%d-%m')
 
-def return_values(User,Tender,filter_by=None,order_by=None):
-    if filter_by is not None:
-        tenders = Tender.query.filter_by(tid=filter_by).first()
-    elif order_by is not None:
-        tender = Tender.query.oreder_by(f"{order_by} desc")
-    else:
-        tenders = Tender.query.all()
+def return_values(tenders,filter_by=None,order_by=None):
+    # if filter_by is not None:
+    #     tenders = Tender.query.filter_by(tid=filter_by).first()
+    # elif order_by is not None:
+    #     tender = Tender.query.oreder_by(f"{order_by} desc")
+    # else:
+    #     tenders = Tender.query.all()
     days = [(t.finish_date - datetime.now()).days for t in tenders]
     values = []
     for i,tender in enumerate(tenders):
@@ -89,11 +89,11 @@ def validate_email(mail):
 
 def validate_password(password):
     import re
-    pass_re = re.compile("^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$")
+    pass_re = re.compile("[A-Za-z0-9@#$%^&+=]{8,}")
     if len(pass_re.findall(password)) == 1:
         return True
     else:
-        return True
+        return False
 
 
 def enter_fake_users_to_db(number_of_users,db,Users):

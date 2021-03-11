@@ -56,19 +56,20 @@ class DailyTask(MFTask):
 
 
 class AddUserTask(MFTask):
-    def __init__(self,first_name,last_name,password,email):
+    def __init__(self,first_name,last_name,email,password):
         self.first_name = first_name
         self.last_name = last_name
-        self.password = password
         self.email = email
+        self.password = password
 
     def process(self):
         db = get_db()
         try:
             orm_user = User(self.first_name,self.last_name,self.email,self.password)
-            db.session.add()
+            db.session.add(orm_user)
             db.session.commit()
-        except:
+        except Exception as e:
+            print(e)
             get_db().session.rollback()
             print("user adding denied", print(self))
 
@@ -97,7 +98,7 @@ class Engine:
             # td = dt.datetime.today().replace(day=dt.datetime.today().day,
             #                                  hour=2, minute=0, second=0,
             #                                  microsecond=0) + dt.timedelta(days=1)
-            td= dt.datetime.today()+dt.timedelta(seconds=20)
+            td= dt.datetime.today()+dt.timedelta(seconds=60)
             delta_t = td - dt.datetime.today()
             tot_sec = delta_t.total_seconds()
             time.sleep(tot_sec)
