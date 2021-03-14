@@ -161,19 +161,18 @@ def newTask():
                     task_file = request.form['task_file']
                 except Exception as e:
                     task_file = None
-            try:
-                status = request.form['status']
-            except:
-                status = 'פתוח'
+            status = request.form['status']
+            print(status)
 
             # add task to database
-            tender_id = 15
+            tender_id = 1
             odt = datetime.now()
             finish = None
             task = Task(tender_id, odt, deadline, finish, status, subject, description)
             try:
                 db.session.add(task)
                 db.session.commit()
+                print("enter_to_db")
             except:
                 print("not able to insert to db")
                 db.session.rollback()
@@ -194,7 +193,15 @@ def tender(tender):
         return redirect(url_for("newTask"))
     tender = Tender.query.filter_by(tid=(tender)).first()
     contact_guy = User.query.filter_by(id=tender.contact_user_from_department).first()
-    return render_template("tender.html", tender=tender,contact_guy=contact_guy)
+    open_tasks = Task.query.filter_by(status="פתוח",tender_id=tender.tid).all()
+    on_prog_tasks = Task.query.filter_by(status="בעבודה",tender_id=tender.tid).all()
+    print(on_prog_tasks)
+    block_tasks = Task.query.filter_by(status="חסום",tender_id=tender.tid).all()
+    complete_tasks = Task.query.filter_by(status="הושלם",tender_id=tender.tid).all()
+    print(open_tasks)
+    return render_template("tender.html", tender=tender,contact_guy=contact_guy,
+                           open_tasks = open_tasks,on_prog_tasks=on_prog_tasks,
+                           block_tasks=block_tasks,complete_tasks=complete_tasks)
 
 
 
@@ -208,6 +215,8 @@ def test():
 
 
 if __name__ == '__main__':
+    # db.drop_all()
+    # fill_db(50, db, User, Tender, Task, TaskLog, TaskNote, UserInTask)
     db.create_all()
     aristo_engine.initiate()
     app.run(debug=True)

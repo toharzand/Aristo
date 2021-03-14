@@ -26,7 +26,7 @@ def enter_tenders_to_db(Tenders,db,number_of_tenders_to_add):
                     'לסניגוריה הציבורית"', 'חדר כושר לבניין החדש', 'מזנון בשרי', 'מזנון חלבי', 'ניקיון בניין ראשי',
                     'ריהוט וציוד נייד', 'ציוד חשמלי למטבחונים', 'צמחיה בתוך המבנה', 'תמונות ואמצעים אסתטיים',
                     'יועץ ארגונומי', 'מולטימדיה - השלמת ציוד', 'עבודות בינוי ושיפוץ', 'צלונים']
-    for i in range(number_of_tenders_to_add):
+    for i in tqdm(range(number_of_tenders_to_add)):
         protocol = "".join(random.choices([str(i) for i in range(0, 10)], k=8))
         comm = random.choice(tenders_committee_Type_lst)
         proc = random.choice(procedure_type_lst)
@@ -40,11 +40,10 @@ def enter_tenders_to_db(Tenders,db,number_of_tenders_to_add):
         try:
             db.session.add(tender)
             db.session.commit()
-            print('tender added succussfully')
         except Exception as e:
             print(e)
             print('cannot add tender')
-            break
+            continue
     return
 
 
@@ -98,7 +97,7 @@ def validate_password(password):
 
 def enter_fake_users_to_db(number_of_users,db,Users):
     fake = Faker()
-    for i in range(number_of_users):
+    for i in tqdm(range(number_of_users)):
         name = fake.name().split()
         f_name = name[0]
         l_name = name[1]
@@ -128,26 +127,26 @@ def delete_users_from_db(number_to_delete,db,Users):
                 db.session.rollback()
 
 
-def enter_fake_tasks_to_db(Tender,Task,db,num):
-    statuses = ['חסום','הושלם','בעבודה']
+def enter_fake_tasks_to_db(Tender,Task,db):
+    statuses = ['חסום','הושלם','פתוח','בעבודה']
     fake = Faker()
     tenders = Tender.query.all()
-    for i in range(num):
-        tender_id = random.choice([i for i in range(1,len(tenders))])
-        odt = fake.past_date()
-        dead_line = fake.future_date()
-        status = random.choice(statuses)
-        subject = f"{random.choice(range(1,60))}כתיבת פרק מספר -"
-        description = f"זהו תיאור המשימה"
-        task = Task(tender_id=tender_id,odt=odt,deadline=dead_line,finish=None,status=status,subject=subject,description=description)
-        # print(task.subject)
-        try:
-            db.session.add(task)
-            db.session.commit()
-        except Exception as e:
-            print("cannot enter user to db")
-            print(e)
-            db.session.rollback()
+    for tender in tenders:
+        for status in statuses:
+            for i in range(random.randrange(0,10)):
+                tender_id = tender.tid
+                odt = fake.past_date()
+                dead_line = fake.future_date()
+                subject = random.choice(['יועמ"ש','ביטחון','חשבות'])
+                description = f"זהו תיאור המשימה"
+                task = Task(tender_id=tender_id,odt=odt,deadline=dead_line,finish=None,status=status,subject=subject,description=description)
+                try:
+                    db.session.add(task)
+                    db.session.commit()
+                except Exception as e:
+                    print("cannot enter user to db")
+                    print(e)
+                    db.session.rollback()
 
 
 def enter_fake_task_logs(db,User,Task,TaskLog,num):
@@ -156,7 +155,7 @@ def enter_fake_task_logs(db,User,Task,TaskLog,num):
     task = Task.query.all()
     users_id = [i for i in range(1,len(users))]
     tasks_id = [i for i in range(1,len(task))]
-    for i in range(num):
+    for i in tqdm(range(num)):
         user = random.choice(users_id)
         task_id = random.choice(tasks_id)
         init_time = fake.date_time_this_month()
@@ -165,10 +164,7 @@ def enter_fake_task_logs(db,User,Task,TaskLog,num):
         try:
             db.session.add(log)
             db.session.commit()
-            print("log enter succ")
-        except Exception as e:
-            print("cannot enter user to db")
-            print(e)
+        except:
             pass
 
 
@@ -178,7 +174,7 @@ def enter_fake_task_noted(db,User,Task,TaskNote,num):
     task = Task.query.all()
     users_id = [i for i in range(1,len(users))]
     tasks_id = [i for i in range(1,len(task))]
-    for i in range(num):
+    for i in tqdm(range(num)):
         user = random.choice(users_id)
         task_id = random.choice(tasks_id)
         init_time = fake.date_time_this_month()
@@ -187,7 +183,6 @@ def enter_fake_task_noted(db,User,Task,TaskNote,num):
         try:
             db.session.add(note)
             db.session.commit()
-            print("log enter succ")
         except Exception as e:
             print("cannot enter user to db")
             print(e)
@@ -224,7 +219,7 @@ def drop_all_tables(db):
 def fill_db(num,db,User,Tender,Task,TaskLog,TaskNote,UserInTask):
     enter_fake_users_to_db(num,db,User)
     enter_tenders_to_db(Tender,db,6*num)
-    enter_fake_tasks_to_db(Tender,Task,db,12*num)
+    enter_fake_tasks_to_db(Tender,Task,db)
     enter_fake_task_logs(db,User,Task,TaskLog,18*num)
     enter_fake_task_noted(db,User,Task,TaskNote,18*num)
     enter_fake_user_in_task(db,User,Task,UserInTask,num*6)

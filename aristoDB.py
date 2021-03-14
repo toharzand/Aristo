@@ -2,9 +2,10 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from datetime import timedelta
 import time
+import Workers
 
 app = Flask(__name__, template_folder='templates',
-            static_folder=r'C:\Users\itay dar\Desktop\פרויקטים\tender\hello_flask\templates')
+            static_folder=r'C:\Users\itay dar\Desktop\פרויקטים\tender\hello_flask\git checker\aristo\templates')
 app.secret_key = "tenderly_secret_key"  # secret app for the session to keep data
 app.permanent_session_lifetime = timedelta(minutes=5)  # time untill user forced to log out
 
@@ -255,3 +256,7 @@ def get_db():
 
 def get_app():
     return app
+
+
+if __name__ == '__main__':
+    db = get_db()
