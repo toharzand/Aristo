@@ -3,7 +3,6 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
 
-
 class EmailSender:
     def __init__(self, reciver):
         self.sender_email = "AristoTenders@gmail.com"
@@ -11,11 +10,13 @@ class EmailSender:
         self.receiver_email = reciver
 
         self.message = MIMEMultipart("alternative")
-        self.message["Subject"] = "Deadline is arriving"
+        self.message["Subject"] = "Aristo Updates"
         self.message["From"] = self.sender_email
         self.message["To"] = self.receiver_email
 
-    def send_email(self, text):
+    def send_email(self, content, subject=None):
+        if subject:
+            self.message["Subject"] = subject
         start = """
             <html>
               <body>
@@ -26,9 +27,9 @@ class EmailSender:
               </body>
             </html>
             """
-        html = start + text.replace("\n", "<br>") + end
+        html = start + content.replace("\n", "<br>") + end
         # Turn these into plain/html MIMEText objects
-        part_1 = MIMEText(text, "plain")
+        part_1 = MIMEText(content, "plain")
         # Add HTML/plain-text parts to MIMEMultipart message
         # The email client will try to render the last part first
         self.message.attach(part_1)
