@@ -1,26 +1,12 @@
 import datetime as dt
-from aristoDB import *
+try:
+    from aristoDB import *
+except Exception as e:
+    print(e)
 import time, random
 import threading
 import collections
-import smtplib
-from email.message import EmailMessage
-
-def email_test():
-    msg = EmailMessage()
-    msg.set_content("test")
-    me = "asafste@gmail.com"
-    msg['Subject'] = "test"
-    msg['From'] = me
-    msg['To'] = me
-
-
-    s = smtplib.SMTP('smtp.gmail.com',587)
-    s.ehlo()
-    s.starttls()
-    s.send_message(msg)
-    s.quit()
-
+import EMailHandler
 
 
 class MFTask:
@@ -53,6 +39,12 @@ class DailyTask(MFTask):
 
     def __repr__(self):
         return "DailyTask"
+
+
+class SendEmail(MFTask):
+    def process(self, receiver, content):
+        sender = EMailHandler.EmailSender(receiver)
+        sender.sender_email(content)
 
 
 class AddUserTask(MFTask):
@@ -148,7 +140,7 @@ def demo_task_adder(eng):
 
 if __name__ == "__main__":
     # db = None
-    eng = Engine(db)
-    eng.initiate()
-    demo_task_adder(eng)
-    # email_test()
+    # eng = Engine(db)
+    # eng.initiate()
+    # demo_task_adder(eng)
+    email_test()
