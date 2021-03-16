@@ -94,21 +94,25 @@ class Engine:
 
 
 def demo_task_adder(eng):
-    # while not eng.should_terminate:
-   for i in range(10):
+    test_start = dt.datetime.now()
+    for i in range(10):
        r = random.randint(1, 10)
        if r>5:
-           eng.add_task(SendEmail("asafste@gmail.com", f"test number {i+1}"))
+           eng.add_task(SendEmail("aristotenders@gmail.com", f"test on {test_start}\ntest number {i+1}"))
        time.sleep(r)
        eng.add_task(DemoTask())
-   for i in range(3):
+    for i in range(3):
        eng.add_task(DemoTask())
-   print("done a round")
-   eng.should_terminate = True
+    print("done a round")
+    time.sleep(2)
+    eng.should_terminate = True
+    with eng.main_cond:
+        with eng.con_cond:
+            print(f"engine done all tasks\nconnection_act: {eng.connection_act}\nmain_act: {eng.main_act}")
 
 
 if __name__ == "__main__":
     db = None
     eng = Engine(db)
     eng.initiate()
-    # demo_task_adder(eng)
+    demo_task_adder(eng)
