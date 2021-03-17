@@ -43,10 +43,22 @@ class SendEmail(MFTask):
         super().__init__()
         self.receiver = receiver
         self.content = content
+        self.subject = subject
 
     def process(self, engine=None):
-        sender = EmailSender(self.receiver)
-        sender.send_email(self.content)
+        count_try = 1
+        is_trying = True
+        while is_trying:
+            try:
+                sender = EmailSender(self.receiver)
+                sender.send_email(self.content, self.subject)
+                is_trying = False
+            except Exception as e:
+                count_try += 1
+                if (count_try-1) % 10 == 0:
+                    print(e)
+                    print(f"failed to send email {count_try - 1} times!")
+                time.sleep(10)
 
 
 

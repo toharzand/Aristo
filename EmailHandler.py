@@ -17,17 +17,16 @@ class EmailSender:
     def send_email(self, content, subject=None):
         if subject:
             self.message["Subject"] = subject
-        start = """
+        html_cont = content.replace("\n", "<br>")
+        html = f"""
             <html>
               <body>
                 <p>
-            """
-        end = """
+                {html_cont}
                 </p>
               </body>
             </html>
             """
-        html = start + content.replace("\n", "<br>") + end
         # Turn these into plain/html MIMEText objects
         part_1 = MIMEText(content, "plain")
         # Add HTML/plain-text parts to MIMEMultipart message
