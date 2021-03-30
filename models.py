@@ -1,4 +1,3 @@
-from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from datetime import timedelta
 import time
@@ -260,3 +259,5 @@ def get_app():
 
 if __name__ == '__main__':
     db = get_db()
+    Workers.fill_db(50,db,User,Tender,Task,TaskLog,TaskNote,UserInTask)
+
