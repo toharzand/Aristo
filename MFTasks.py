@@ -25,6 +25,27 @@ class DemoTask(MFTask):
     def __repr__(self):
         return "DemoTask"
 
+class HeartBeat(MFTask):
+    '''
+        @Name: HeartBeat
+        @Parameters:
+                    Abstract MFTask object
+        @Do:
+            check every 10 seconds if the main site is still running. this called the heartbeat of our system.
+            if the main site crashes, then the heartbeat will detect it, and do what needed to load back asap.
+             - restore the data from database.
+             - read the logs, redo transaction that committed and undo transaction that hasn't.
+             - load once again the website using the updated data from previous steps.
+        @Return:
+                fully functional updated site.
+    '''
+    def process(self ,engine,is_main_running):
+        if is_main_running:
+            print("<heartbeat>")
+            time.sleep(1)
+        else:
+            print("main site fail - rollback and call backup! hurry, the whole world is upon your shoulders.")
+            pass
 
 
 

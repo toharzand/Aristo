@@ -1,7 +1,15 @@
+from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from datetime import timedelta
 import time
-import Workers
+from Workers import *
+import mysql.connector
+from mysql.connector import Error
+
+
+
+
+
 
 app = Flask(__name__, template_folder='templates',
             static_folder=r'C:\Users\itay dar\Desktop\פרויקטים\tender\hello_flask\git checker\aristo\templates')
@@ -250,14 +258,73 @@ class TaskDependency(db.Model):
         self.blocked = blocked
         self.blocking = blocking
 
+
+class TenderTemplate(db.Model):
+    '''
+        @Name : TenderTemplate
+        @Do: create table that contain all the Tender templates and the relevant data about them in the database.
+        @ Param:
+                tid - tender template indication number.
+                tenders_committee_Type - the area on which the tender rely to such as - ['רכישות','תקשוב','יועצים',...]
+                procedure_type = the type of how the procedure occurs such as
+                                    - ['מכרז פומבי','תיחור סגור','פנייה פומבית','RFI','מכרז חשכ"ל','הצעת מחיר',...]
+                department: the departments that create the tender. can be - ['רווחה','מערכות מידע','לוגיסטיקה','לשכה משפטית ',...]
+    '''
+
+    __tablename__ = "TendersTemplate"
+
+    tid = db.Column(db.Integer, primary_key=True, nullable=False, autoincrement=True)
+    tenders_committee_Type = db.Column(db.VARCHAR(20))
+    procedure_type = db.Column(db.VARCHAR(20))
+    # todo references
+    # Task_to_task_template
+
+    def __init__(self, tenders_committee_Type, procedure_type,department):
+        self.tenders_committee_Type = tenders_committee_Type
+        self.procedure_type = procedure_type
+        self.department = department
+
+
+
+class TaskTemplate(db.Model):
+    """
+    task_id = primary_key
+    status = ["open", "close", "blocked", "on progress"]
+    subject = short text(50)
+    description = longer text(120)
+    """
+
+    __tablename__ = "TasksTemplate"
+    task_id = db.Column(db.Integer, primary_key=True,autoincrement=True)
+    status = db.Column(db.VARCHAR(50))
+    subject = db.Column(db.VARCHAR(50))
+    description = db.Column(db.VARCHAR(120))
+    # todo references
+    # task
+
+
+
 def get_db():
     return db
 
 def get_app():
     return app
 
+def get_my_sql_connection():
+    try:
+        connection = mysql.connector.connect(host="localhost",
+                                     user="itda",
+                                     passwd="28031994",
+                                     database="new_tender")
+
+        return connection
+    except Error as e:
+        print("error occurd")
+        print(e)
+
+
 
 if __name__ == '__main__':
     db = get_db()
-    Workers.fill_db(50,db,User,Tender,Task,TaskLog,TaskNote,UserInTask)
+    # Workers.fill_db(50,db,User,Tender,Task,TaskLog,TaskNote,UserInTask)
 
