@@ -22,8 +22,8 @@ config the connection to mysql database
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://itda:28031994@127.0.0.1:3306/new_tender'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-db = SQLAlchemy(app)  # create connection with database
-
+# db = SQLAlchemy(app)  # create connection with database
+db = get_my_sql_connection()
 
 
 class User(db.Model):

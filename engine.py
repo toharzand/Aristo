@@ -1,6 +1,6 @@
 import datetime as dt
 try:
-    from aristoDB import *
+    from models import *
 except Exception as e:
     print(e)
 import time, random
