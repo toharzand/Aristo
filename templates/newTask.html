@@ -127,23 +127,23 @@ select {
         <h3 style="background-color: #f2f2f2;">הוסיפו משימה חדשה למכרז</h3>
 
 <select dir="rtl" name="status" id="status">
-    <option value="" disabled selected>סטטוס</option>
+    <option value="" disabled selected>*סטטוס</option>
     <option value="פתוח">פתוח</option>
     <option value="חסום">חסום</option>
     <option value="בעבודה">בעבודה</option>
     <option value="הושלם">הושלם</option>
 </select>
-    <input type="text" id="subject" name="subject" placeholder="נושא המשימה" dir="rtl"></div>
+    <input type="text" id="subject" name="subject" placeholder="*נושא המשימה" dir="rtl"></div>
 <div align="center">
-    <input type="file" id="selectedFile" name="selectedFile" style="display: none;" />
+    <input type="file" id="selectedFile" name="selectedFile" style="display: none;"  />
     <input type="button" name="task_file" id="task_file" value="+   הוסף קובץ (בחירה)" dir="rtl" onclick="document.getElementById('selectedFile').click();" />
-    <input type="text" id="users" name="users" placeholder="הוסף משתמשים" dir="rtl">
+    <input type="text" id="users" name="users" placeholder="*הוסף משתמשים" dir="rtl">
 </div>
 <div align="center">
-    <input placeholder="דד ליין למשימה" type="text" onfocus="(this.type = 'date')"  id="finish_date" name="finish_date" dir="rtl">
+    <input placeholder="*דד ליין למשימה" type="text" onfocus="(this.type = 'date')"  id="finish_date" name="finish_date" dir="rtl">
 </div>
 <div align="center">
-<textarea dir="rtl" id="description" name="description" rows="10">הוסף תיאור למשימה</textarea>
+<textarea dir="rtl" id="description" name="description" rows="10" placeholder="*הוסף תיאור למשימה"></textarea>
     {% with messages = get_flashed_messages() %}
         {% if messages %}
             {% for msg in messages %}

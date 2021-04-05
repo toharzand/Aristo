@@ -225,6 +225,85 @@ def fill_db(num,db,User,Tender,Task,TaskLog,TaskNote,UserInTask):
     enter_fake_user_in_task(db,User,Task,UserInTask,num*6)
 
 
+def insert_tender_templates():
+    tenders_committee_Type_lst = ['רכישות', 'תקשוב', 'יועצים']
+    procedure_type_lst = ['מכרז פומבי', 'תיחור סגור', 'פנייה פומבית', 'RFI', 'מכרז חשכ"ל', 'הצעת מחיר']
+    department_lst = ['רווחה', 'מערכות מידע', 'לוגיסטיקה', 'לשכה משפטית ']
+
+    for i in tqdm(range(10)):
+        comm = random.choice(tenders_committee_Type_lst)
+        proc = random.choice(procedure_type_lst)
+        depar = random.choice(department_lst)
+        tender = TenderTemplate(comm, proc, depar)
+        try:
+            db.session.add(tender)
+            db.session.commit()
+        except Exception as e:
+            print(e)
+            print('cannot add tender')
+            continue
+    return
+
+
+def insert_task_templates():
+    statuses = ['חסום', 'הושלם', 'פתוח', 'בעבודה']
+    subjects = ['כתיבת פרק בטיחות','כתיבת פרק פתיחה','כתיבת פרק חשבות','כתיבת פרק יועמ"ש','כתיבת פרק ועדת מכרזים','כתיבת פרק יועץ חיצוני','כתיבת פרק מנהל מכרז']
+    description = "זהו תיאור המשימה - מוגבל בכמות מילים - נועד על מנת לתאר את המשימה בצורה פשוטה ועניינית"
+    for subject in subjects:
+        if subject == "כתיבת פרק פתיחה":
+            task = TaskTemplate('פתוח',subject,description)
+        else:
+            task = TaskTemplate('חסום',subject,description)
+
+        print("here")
+        print(task.subject)
+        try:
+            db.session.add(task)
+            db.session.commit()
+        except Exception as e:
+            print(e)
+            db.session.rollback()
+
+
+def insert_data_to_dependencies():
+    from queue import Queue
+    conn = get_my_sql_connection()
+    cursor = conn.cursor()
+    opens = """SELECT * from taskstemplate
+                where status = 'פתוח';
+            """
+    blocked = """
+                select * from taskstemplate
+                 where status = 'חסום';
+                """
+    cursor.execute(opens)
+    open_list = cursor.fetchall()
+    cursor.execute(blocked)
+    blocked_list = cursor.fetchall()
+    all_tenders_templates = TenderTemplate.query.all()
+    q = Queue(maxsize=len(open_list)+len(blocked_list))
+    for tender in all_tenders_templates:
+        for task in open_list:
+            q.put(task[0])
+        while not q.empty():
+            v = q.get()
+
+            
+
+
+    conn.close()
+
+
+
+
+
+    # all_tasks = TaskTemplate.query.all()
+    # all_tenders = TenderTemplate.query.all()
+    #
+    #
+    # for tender in all_tenders:
+
+
 
 def function_for_sorting(request,Tender,db):
     pass

@@ -1,7 +1,6 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from datetime import timedelta
-import time
 from Workers import *
 import mysql.connector
 from mysql.connector import Error
@@ -20,7 +19,7 @@ app.permanent_session_lifetime = timedelta(minutes=5)  # time untill user forced
 config the connection to mysql database
 '''
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://itda:28031994@127.0.0.1:3306/new_tender'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://itda:28031994@127.0.0.1:3306/aristodb'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)  # create connection with database
 
@@ -133,8 +132,6 @@ class Task(db.Model):
     task_logs = db.relationship('TaskLog', backref='Tasks', lazy=True)
     task_notes = db.relationship('TaskNote', backref='Tasks', lazy=True)
     task_files = db.relationship('FileInTask', backref='Tasks', lazy=True)
-
-
 
     def __init__(self, tender_id, odt, deadline, finish, status, subject, description):
         self.tender_id = tender_id
@@ -251,7 +248,6 @@ class TaskDependency(db.Model):
     __tablename__ = "TasksDependencies"
 
     blocked = db.Column(db.Integer, db.ForeignKey('Tasks.task_id'), primary_key=True, nullable=False)
-    # blocking = db.Column(db.Integer,db.CheckCostraint('blocking!=blocked'), db.ForeignKey('Task.task_id'), primary_key=True, nullable=False)
     blocking = db.Column(db.Integer, db.ForeignKey('Tasks.task_id'), primary_key=True, nullable=False)
 
     def __init__(self, blocked, blocking):
@@ -276,14 +272,14 @@ class TenderTemplate(db.Model):
     tid = db.Column(db.Integer, primary_key=True, nullable=False, autoincrement=True)
     tenders_committee_Type = db.Column(db.VARCHAR(20))
     procedure_type = db.Column(db.VARCHAR(20))
+    department = db.Column(db.VARCHAR(50))
     # todo references
-    # Task_to_task_template
+    tender_tasks = db.relationship('TaskDependenciesTemplate',backref='TendersTemplate',lazy=True)
 
     def __init__(self, tenders_committee_Type, procedure_type,department):
         self.tenders_committee_Type = tenders_committee_Type
         self.procedure_type = procedure_type
         self.department = department
-
 
 
 class TaskTemplate(db.Model):
@@ -300,7 +296,39 @@ class TaskTemplate(db.Model):
     subject = db.Column(db.VARCHAR(50))
     description = db.Column(db.VARCHAR(120))
     # todo references
-    # task
+    # task_1 = db.relationship('TaskDependenciesTemplate',backref='TasksTemplate',lazy=True)
+
+    def __init__(self, status, subject, description):
+        self.status = status
+        self.subject = subject
+        self.description = description
+
+class TaskDependenciesTemplate(db.Model):
+    """
+    dependend - the task that blocked the second task
+    dependee - the task that depend in another task
+    tender_id - the tender that contain the tasks
+    """
+    __tablename__ = "TasksDependenciesTemplate"
+    dependend_id = db.Column(db.Integer,db.ForeignKey('TasksTemplate.task_id'), primary_key=True,nullable=False)
+    dependend = db.relationship("TaskTemplate",foreign_keys="TaskDependenciesTemplate.dependend_id")
+
+    dependee_id = db.Column(db.Integer,db.ForeignKey('TasksTemplate.task_id'), primary_key=True,nullable=False)
+    dependee = db.relationship("TaskTemplate",foreign_keys="TaskDependenciesTemplate.dependee_id")
+
+    tender_id = db.Column(db.Integer,db.ForeignKey('TendersTemplate.tid'), primary_key=True,nullable=False)
+
+    def __init__(self, dependend, dependee, tender_id):
+        self.dependend = dependend
+        self.dependee = dependee
+        self.validate()
+        self.tender_id = tender_id
+
+    def validate(self):
+        if self.dependee == self.dependend:
+            raise Exception
+
+
 
 
 
@@ -315,7 +343,7 @@ def get_my_sql_connection():
         connection = mysql.connector.connect(host="localhost",
                                      user="itda",
                                      passwd="28031994",
-                                     database="new_tender")
+                                     database="aristodb")
 
         return connection
     except Error as e:
@@ -326,5 +354,30 @@ def get_my_sql_connection():
 
 if __name__ == '__main__':
     db = get_db()
-    # Workers.fill_db(50,db,User,Tender,Task,TaskLog,TaskNote,UserInTask)
+
+    conn = get_my_sql_connection()
+    cursor = conn.cursor()
+    query = """select task_id from tasks
+                order by task_id desc
+                limit 1;
+                """
+    cursor.execute(query)
+    print(cursor.fetchall()[0][0])
+
+
+
+    # insert_data_to_dependencies()
+    # try:
+    #     # task_temp = TaskTemplate("חסום","הגשת בקשה להלוואה מבנקים","על מנת לרכוש את המטוסים יש לקבל הלוואות וערבויות מבנקים")
+    #     tasks_relationship = TaskDependenciesTemplate(1,2,1)
+    #     db.session.add(tasks_relationship)
+    #     db.session.commit()
+    # except Exception as e:
+    #     print(e)
+    # db.create_all()
+    # fill_db(50,db,User,Tender,Task,TaskLog,TaskNote,UserInTask)
+    # all_tenders_templates = TenderTemplate.query.all()
+    # for temp in all_tenders_templates:
+
+
 

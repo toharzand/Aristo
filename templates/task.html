@@ -1,0 +1,267 @@
+{% extends "base.html" %}
+{% block title %}task{% endblock %}
+
+{% block content %}
+
+<style>
+table, th, td {
+  border: 1px solid #ddd;
+  border-collapse: collapse;
+  text-align: center;
+}
+
+th {
+  background-color: #4CAF50;
+  color: white;
+  padding: 8px
+}
+
+div {
+    background-color: #e2e2e2;
+    }
+
+.div1 {
+ float:right;
+  width:23%;
+  height:auto;
+  border: none;
+  text-align: center;
+  display: inline-block;
+}
+
+.div2 {
+      border: 1px solid #ddd;
+      border-color: black;
+      border-radius:10px;
+      box-sizing: border-box;
+      height:130px;
+      margin-top:5px;
+      margin-bottom:5px;
+}
+
+
+input[type=submit] {
+  width: 10%;
+  background-color: #4CAF50;
+  color: white;
+  padding: 14px 20px;
+  margin: 8px 0;
+  border: none;
+  border-radius: 30px;
+  cursor: pointer;
+  text-align: center;
+}
+
+input[type=submit]:hover {
+  background-color: #45a049;
+}
+
+.button {
+border:None;
+  color: black;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 14px;
+  cursor: pointer;
+  border-radius: 100px;
+  padding: 12px 20px;
+  margin: 8px 0;
+  display: inline-block;
+  border: 3px solid #ccc;
+  border-radius: 50px;
+  box-sizing: border-box;
+}
+
+.button1 {background-color: f9f9f9; margin-right:5px;display: inline-block;} /* Green */
+
+select {
+background-color: #C0C0C0;
+  padding: 12px 20px;
+  margin: 8px 0 0 8px;
+  display: inline-block;
+  border: 3px solid #ccc;
+  border-radius: 50px;
+  box-sizing: border-box;
+  float:left;
+}
+
+body {font-family: Arial, Helvetica, sans-serif;}
+* {box-sizing: border-box;}
+
+/* Button used to open the chat form - fixed at the bottom of the page */
+.open-button {
+  background-color: #555;
+  color: white;
+  padding: 16px 20px;
+  border: none;
+  cursor: pointer;
+  opacity: 0.8;
+  position: fixed;
+  bottom: 23px;
+  right: 28px;
+  width: 280px;
+}
+
+/* The popup chat - hidden by default */
+.chat-popup {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  right: 15px;
+  border: 3px solid #f1f1f1;
+  z-index: 9;
+}
+
+/* Add styles to the form container */
+.form-container {
+  max-width: 300px;
+  padding: 10px;
+  background-color: white;
+}
+
+/* Full-width textarea */
+.form-container textarea {
+  width: 100%;
+  padding: 15px;
+  margin: 5px 0 22px 0;
+  border: none;
+  background: #f1f1f1;
+  resize: none;
+  min-height: 200px;
+}
+
+/* When the textarea gets focus, do something */
+.form-container textarea:focus {
+  background-color: #ddd;
+  outline: none;
+}
+
+/* Set a style for the submit/send button */
+.form-container .btn {
+  background-color: #4CAF50;
+  color: white;
+  padding: 16px 20px;
+  border: none;
+  cursor: pointer;
+  width: 100%;
+  margin-bottom:10px;
+  opacity: 0.8;
+}
+
+/* Add a red background color to the cancel button */
+.form-container .cancel {
+  background-color: red;
+}
+
+/* Add some hover effects to buttons */
+.form-container .btn:hover, .open-button:hover {
+  opacity: 1;
+}
+
+</style>
+
+
+<div dir="rtl" align="center" style="background-color:white;">
+  <p>&nbsp;</p>
+
+<h1 align="center">שם המשימה: {{task.subject}}</h1>
+<table style="width:100%">
+  <tr>
+    <th >סטטוס</th>
+    <th>אנשי קשר</th>
+    <th>תאריך תחילת משימה</th>
+    <th>תאריך סיום משוער</th>
+  </tr>
+    <tr>
+    <td>{{task.status}}</td>
+    <td>{{contact_guy.first_name}} {{contact_guy.last_name}}</td>
+    <td>{{task.odt.date()}}</td>
+    <td>{{task.deadline.date()}}</td>
+    </tr>
+</table>
+</div>
+
+
+
+<div class="div div1">
+  <div class="div div2" style="background-color: #6495ED; float:right; width:400px; height:200px;">
+    <p style="font-size:28px; float:center;" align="center">תיאור המשימה</p>
+    <p style="font-size:16px; float:center;" align="right">{{task.description}}</p>
+  </div>
+  <div class="div div2" style="background-color: #6495ED; float:right; width:400px; height:100%;">
+    <p style="font-size:28px; float:center;" align="center">קבצים מצורפים</p>
+      <div class="div div2" style="background-color:#6495ED; border: None;">
+        <p style="font-size:50px; float:center; display: inline-block;" align="center">📁</p>
+        <p style="font-size:50px; float:center; display: inline-block;" align="center">📁</p>
+        <p style="font-size:50px; float:center; display: inline-block;" align="center">📁</p>
+        <p>&nbsp;</p>
+      </div>
+  </div>
+</div>
+
+<div class="div div2" dir="rtl" style="background-color: #6495ED; float:left; width:400px; height:500px;overflow: scroll;">
+  <p style="font-size:28px; float:center;" align="center">עדכונים</p>
+  {% if task_logs %}
+    {% for log in task_logs %}
+      <p style="font-size:12px; float:center;" align="center">{{log.description}}</p>
+    {% endfor %}
+  {% else %}
+    <p style="font-size:12px; float:center;" align="center">אין עדכונים להציג</p>
+    {% for _ in range(10) %}
+      <p>&nbsp;</p>
+    {% endfor %}
+  {% endif %}
+</div>
+
+<div class="div div2" dir="rtl" style="background-color: #6495ED; float:left; width:500px; height:500px; margin-left:100px; overflow: scroll;">
+    <p style="font-size:28px; float:center;" align="center">צ'אט</p>
+  {% if task_notes %}
+    {% for note in task_notes %}
+      <p style="font-size:16px; float:center;" align="center">
+        מאת:
+        {{note.user_id}}
+        -
+        {{note.note}}
+      </p>
+    {% endfor %}
+  {% else %}
+    <p style="font-size:12px; float:center;" align="center">אין הודעות בצ'אט</p>
+    {% for _ in range(10) %}
+      <p>&nbsp;</p>
+    {% endfor %}
+  {% endif %}
+
+  </div>
+</div>
+
+
+
+<button class="open-button" onclick="openForm()">צ'אט</button>
+
+<div class="chat-popup" id="myForm" dir="rtl">
+  <form action="#" class="form-container" method="post">
+    <h1>צ'אט</h1>
+    <label for="msg"><b>תוכן ההודעה</b></label>
+    <textarea placeholder="הוסף הערה לצ'אט" name="msg" id="msg" required></textarea>
+
+    <button type="submit" class="btn" name="send" value="{{task.task_id}}">שלח</button>
+    <button type="button" class="btn cancel" onclick="closeForm()">סגור</button>
+  </form>
+</div>
+
+<script>
+function openForm() {
+  document.getElementById("myForm").style.display = "block";
+}
+
+function closeForm() {
+  document.getElementById("myForm").style.display = "none";
+}
+</script>
+
+
+
+
+
+{% endblock %}

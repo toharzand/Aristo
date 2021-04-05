@@ -3,6 +3,7 @@ from models import *
 import time
 from datetime import datetime
 from engine import *
+import random
 
 
 app = get_app()
@@ -44,10 +45,7 @@ def login():
                     emails = [u.email for u in User.query.all()]
                     if validate_email(new_email) and new_email not in emails:
                         if validate_password(new_pass):
-                            print(validate_password(new_pass))
-                            print("user is about to enter db")
-                            user = User(first_name, last_name, new_email, new_pass)
-                            aristo_engine.add_task(engine.AddUserTask(first_name,last_name,new_email,new_pass))
+                            aristo_engine.add_task(AddUserTask(first_name,last_name,new_email,new_pass))
                             return redirect(url_for("user"))
                         else:
                             flash("סיסמא חייבת להכיל אות גדולה, אות קטנה וספרה")
@@ -101,11 +99,18 @@ def tenders():
 
 @app.route("/tender/<tender>", methods=["POST", "GET"])
 def tender(tender):
-    print("enter")
+    print("enter tender")
     if request.method == 'POST':
         session.permanent = True
-        return redirect(url_for("newTask",tid=tender))
-    tender = Tender.query.filter_by(tid=(tender)).first()
+        try:
+            if request.form.get('new_task') == 'new_task':
+                return redirect(url_for("newTask",tid=tender))
+            else:
+                return redirect(url_for("task",tid=request.form['view_task']))
+        except Exception as e:
+            print(e)
+    tender = Tender.query.filter_by(tid=tender).first()
+    print(tender)
     contact_guy = User.query.filter_by(id=tender.contact_user_from_department).first()
     open_tasks = Task.query.filter_by(status="פתוח",tender_id=tender.tid).all()
     on_prog_tasks = Task.query.filter_by(status="בעבודה",tender_id=tender.tid).all()
@@ -144,11 +149,12 @@ def newTender():
                             subject,department,start_date,finish_date,
                             contact_user_from_department,tender_manager)
             try:
+                print(tender.contact_user_from_department)
+                contact_guy = User.query.filter_by(id=tender.contact_user_from_department).first()
                 db.session.add(tender)
                 db.session.commit()
-                flash("מכרז נוצר בהצלחה - מיד תועבר לעמוד המכרז")
-                contact_guy = User.query.filter_by(id=tender.contact_user_from_department).first()
-                return render_template("tender.html",tender=tender,contact_guy=contact_guy)
+                return redirect(url_for("tender",tender=tender.tid,contact_guy=contact_guy))
+                # return render_template("tender.html",tender=tender,contact_guy=contact_guy)
             except Exception as e:
                 print(e)
                 db.session.rollback()
@@ -161,6 +167,7 @@ def newTender():
 @app.route("/newTask/<tid>",methods=["POST", "GET"])
 def newTask(tid):
     if request.method == "POST":
+        print("new task")
         session.permanent = True
         try:
             subject = request.form['subject']
@@ -172,13 +179,20 @@ def newTask(tid):
             else:
                 print(len(subject))
                 try:
-                    task_file = request.form['task_file']
+                    task_file = request.files['selectedFile']
+                    print("user enterd file")
+                    # print(task_file)
+                    print(type(task_file))
+                    print(dir(task_file))
                 except Exception as e:
+                    print("user did not enterd file")
                     task_file = None
             if len(subject) > 15:
                 print("must be hereeeeeee")
                 flash("נושא המשימה - עד 15 אותיות")
                 return render_template("newTask.html")
+            # if not (type(user) == 'int'):
+            #     flash('must enter number for user identification')
             status = request.form['status']
             print(status)
             # add task to database
@@ -188,19 +202,65 @@ def newTask(tid):
             try:
                 db.session.add(task)
                 db.session.commit()
-                print("enter_to_db")
-                return redirect(url_for("tender",tender=tid))
+                print("enter_to_db - task")
             except Exception as e:
                 print(e)
                 print("not able to insert to db")
                 db.session.rollback()
-
+            try:
+                conn = get_my_sql_connection()
+                cursor = conn.cursor()
+                query = """select task_id from tasks
+                            order by task_id desc
+                            limit 1;
+                            """
+                cursor.execute(query)
+                task_id = (cursor.fetchall()[0][0])
+                user_in_current_task = UserInTask(task_id, users, "god")
+                db.session.add(user_in_current_task)
+                db.session.commit()
+                return redirect(url_for("tender",tender=tid))
+            except Exception as e:
+                print(e)
+                db.session.rollback()
         except Exception as e:
             print(e)
 
     print("here")
     return render_template("newTask.html")
 
+
+
+@app.route('/task/<tid>',methods=["POST", "GET"])
+def task(tid):
+    if request.method == "POST":
+        session.permanent = True
+        if request.form['send']:
+            user_msg = request.form['msg']
+            time = datetime.now()
+            task_id = request.form['send']
+            conn = get_my_sql_connection()
+            cursor = conn.cursor()
+            query = f"""SELECT * FROM aristodb.tasksnotes
+                        where task_id = {task_id};"""
+            cursor.execute(query)
+            user_id = 1
+            task_note = TaskNote(user_id,time,task_id,user_msg)
+            try:
+                db.session.add(task_note)
+                db.session.commit()
+                print("data has been commited")
+            except:
+                db.session.rollback()
+    print("build task page")
+    task = Task.query.filter_by(task_id=tid).first()
+    print(task.description)
+    contact_guy = UserInTask.query.filter_by(task_id = task.task_id).first()
+    contact_guy = User.query.filter_by(id=contact_guy.user_id).first()
+    task_logs = TaskLog.query.filter_by(task_id = task.task_id).all()
+    notes = TaskNote.query.filter_by(task_id = task.task_id).all()
+    print(notes)
+    return render_template("task.html",task=task,contact_guy=contact_guy,task_logs=task_logs,task_notes = notes)
 
 @app.route("/about")
 def about():
@@ -213,7 +273,7 @@ def test():
 
 if __name__ == '__main__':
     # db.drop_all()
-    # fill_db(50, db, User, Tender, Task, TaskLog, TaskNote, UserInTask)
     db.create_all()
+    # fill_db(50, db, User, Tender, Task, TaskLog, TaskNote, UserInTask)
     aristo_engine.initiate()
     app.run(debug=True)

@@ -1,7 +1,7 @@
 from EmailHandler import *
 import time
 try:
-    from aristoDB import *
+    from models import *
 except Exception as e:
     print("couldn't import aristoDB")
 
