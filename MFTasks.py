@@ -7,12 +7,30 @@ except Exception as e:
 
 
 class MFTask:
-    def __init__(self, sess="127.0.0.1"):
-        self.sess = sess
+    def __init__(self):
+        pass
 
     def process(self, engine=None):
         print(f"process of {self} wasn't yet overridden")
         pass
+
+
+class MFResponse:
+    def __init__(self):
+        self.data = None
+        self.complete = False
+
+    def get(self):
+        return self.data
+
+    def is_complete(self):
+        return self.complete
+
+    def set_data(self,data):
+        self.data = data
+
+    def complete(self):
+        self.complete = True
 
 
 

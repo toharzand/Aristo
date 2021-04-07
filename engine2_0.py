@@ -1,52 +1,52 @@
 import datetime as dt
+
 try:
     from models import *
 except Exception as e:
     print(e)
 import time, random
 import threading
+import multiprocessing as mp
 import collections
 from MFTasks import *
 
 
 class Engine:
-    def __init__(self, database):
-        self.main_act = collections.deque()
-        self.connection_act = collections.deque()
-        self.main_response = collections.deque()
-        self.connection_response = collections.deque()
+    def __init__(self, database=None, pool_size=mp.cpu_count()):
+        # self.main_act = collections.deque()
+        # self.main_futures = collections.deque()
+        self.main_act = mp.Queue()
+        self.main_future = mp.Queue()
+        # self.connection_act = collections.deque()
+        self.pool_size = pool_size
         self.main_is_processing = False
         self.con_is_processing = False
         self.db = database
         self.main_cond = threading.Condition()
-        self.con_cond = threading.Condition()
+        # self.con_cond = threading.Condition()
         self.daily_thread = threading.Thread(target=self.daily_update, daemon=True)
-        self.main_thread = threading.Thread(target=self.main_run, daemon=True)
-        self.connection_thread = threading.Thread(target=self.connection_run, daemon=True)
+        # self.main_thread = threading.Thread(target=self.main_run, daemon=True)
+        # self.connection_thread = threading.Thread(target=self.connection_run, daemon=True)
         self.should_terminate = False
 
     def add_task(self, var):
-        ret = MFResponse()
         if type(var) == SendEmail:
             self.connection_act.append(var)
-            self.connection_response.append(ret)
             if not self.con_is_processing:
                 with self.con_cond:
                     self.con_cond.notifyAll()
         else:
             self.main_act.append(var)
-            self.main_response.append(ret)
             if not self.main_is_processing:
                 with self.main_cond:
                     self.main_cond.notifyAll()
-        return ret
-                
+
     def daily_update(self):
         while not self.should_terminate:
             # td = dt.datetime.today().replace(day=dt.datetime.today().day,
             #                                  hour=2, minute=0, second=0,
             #                                  microsecond=0) + dt.timedelta(days=1)
-            td= dt.datetime.today()+dt.timedelta(seconds=60)
+            td = dt.datetime.today() + dt.timedelta(seconds=60)
             delta_t = td - dt.datetime.today()
             tot_sec = delta_t.total_seconds()
             time.sleep(tot_sec)
@@ -58,12 +58,10 @@ class Engine:
         while not self.should_terminate:
             self.main_is_processing = True
             with self.main_cond:
-                while len(self.main_act)>0:
+                while len(self.main_act) > 0:
                     print(f"main act before popping: {self.main_act}")
                     t = self.main_act.popleft()
-                    r = self.main_response.popleft()
-                    r.set_data(t.process(self))
-                    r.complete()
+                    t.process(self)
                 self.main_is_processing = False
                 if not self.should_terminate:
                     self.main_cond.wait()
@@ -77,9 +75,7 @@ class Engine:
                 while len(self.connection_act) > 0:
                     print(f"con act before popping: {self.connection_act}")
                     t = self.connection_act.popleft()
-                    r = self.connection_response.popleft()
-                    r.set_data(t.process(self))
-                    r.complete()
+                    t.process(self)
                 self.con_is_processing = False
                 if not self.should_terminate:
                     self.con_cond.wait()
@@ -100,19 +96,16 @@ class Engine:
             raise e
 
 
-
-
-
 def demo_task_adder(eng):
     test_start = dt.datetime.now()
     for i in range(10):
-       r = random.randint(1, 10)
-       if r>5:
-           eng.add_task(SendEmail("aristotenders@gmail.com", f"test on {test_start}\ntest number {i+1}"))
-       time.sleep(r)
-       eng.add_task(DemoTask())
+        r = random.randint(1, 10)
+        if r > 5:
+            eng.add_task(SendEmail("aristotenders@gmail.com", f"test on {test_start}\ntest number {i + 1}"))
+        time.sleep(r)
+        eng.add_task(DemoTask())
     for i in range(3):
-       eng.add_task(DemoTask())
+        eng.add_task(DemoTask())
     print("done a round")
     time.sleep(2)
     eng.should_terminate = True
