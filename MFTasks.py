@@ -124,3 +124,55 @@ class AddUserTask(MFTask):
             """
         engine.add_task(SendEmail(self.email, cont))
 
+
+class CreateTenderFromTemplate(MFTask):
+    def __init__(self, template_id):
+        self.template_id = template_id
+        self.con = get_my_sql_connection().cursor()
+
+    def create_template_from_tender_BFS(self, template_tender_id, real_tender_id):
+        graph = {}  # {task_template_id : number (0=grey, 1=black)}
+
+        q = []
+
+        lst_of_first_tasks_of_tender = self.con.excecute("""
+            SELECT dependant
+            FROM
+            TasksToTasksTemplate
+            WHERE
+            tender_id = ? and dependee = null
+            """, template_tender_id)
+        for row in lst_of_first_tasks_of_tender:
+            real_dependent_id = self.create_real_task_from_template_task(template_tender_id, row[0])
+            q.append((row[0], real_dependent_id))
+            graph[row[0]] = 0
+
+        while len(q) != 0:
+            template_dependee_id, real_dependee_id = q.pop(0)  # getting (task template id , task real id)
+            lst_of_template_dependants = self.con.excecute("""
+            SELECT dependant
+            FROM
+            TasksToTasksTemplate
+            WHERE
+            depandee = ?
+            """, template_dependee_id)  # = [(depndant1_id), (depandent1_id), (depandent2_id)])
+            for row in lst_of_template_dependants:
+                if row[0] in graph.keys():
+                    continue
+                real_dependent_id = self.create_real_task_from_template_task(template_tender_id, row[0])
+                self.add_blocked_to_blocking(real_dependee_id, real_dependent_id)
+                q.append((row[0], real_dependent_id))
+                graph[row[0]] = 1
+            graph[template_dependee_id] = 1
+
+    def process(self):
+        connection = get_my_sql_connection()
+        curser = connection.curser()
+        curser.excecute("...")
+
+    def create_real_task_from_template_task(self, template_tender_id, param):
+        pass  # todo
+
+    def add_blocked_to_blocking(self, real_dependee_id, real_dependent_id):
+        pass  # todo
+
