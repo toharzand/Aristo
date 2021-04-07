@@ -4,6 +4,7 @@ from datetime import datetime
 import numpy as np
 from tqdm import tqdm
 from models import *
+import models
 
 
 def enter_tenders_to_db(Tenders,db,number_of_tenders_to_add):
@@ -61,6 +62,19 @@ def return_values(tenders,filter_by=None,order_by=None):
     #     tender = Tender.query.oreder_by(f"{order_by} desc")
     # else:
     #     tenders = Tender.query.all()
+    conn = models.get_my_sql_connection()
+    cursor = conn.cursor()
+    query = """ select distinct tender_id from users u
+                inner join usersintasks ut
+                on u.id=ut.user_id
+                inner join tasks t
+                on ut.task_id = t.task_id
+            """
+    cursor.execute(query)
+    all_tenders_id = cursor.fetchall()
+    print(all_tenders_id)
+    tenders_to_present = [tender for tender in tenders if tender.tid in all_tenders_id]
+    print(tenders_to_present)
     days = [(t.finish_date - datetime.now()).days for t in tenders]
     values = []
     for i,tender in enumerate(tenders):

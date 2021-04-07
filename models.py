@@ -4,6 +4,8 @@ from datetime import timedelta
 from Workers import *
 import mysql.connector
 from mysql.connector import Error
+from flask_login import UserMixin
+
 
 
 
@@ -21,11 +23,11 @@ config the connection to mysql database
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://itda:28031994@127.0.0.1:3306/aristodb'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-db = SQLAlchemy(app)  # create connection with database
+db = SQLAlchemy(app,session_options={"autoflush": False})  # create connection with database
 
 
 
-class User(db.Model):
+class User(UserMixin,db.Model):
     '''
         @Name : User
         @Do: create table that contain all the users and the relevant data about them in the database
@@ -42,8 +44,8 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True, nullable=False, autoincrement=True)
     first_name = db.Column(db.String(50), nullable=False)
     last_name = db.Column(db.String(50), nullable=False)
-    email = db.Column(db.String(50), nullable=False, unique=True)
-    password = db.Column(db.String(10), nullable=False)
+    email = db.Column(db.String(100), nullable=False, unique=True)
+    password = db.Column(db.String(100), nullable=False)
     # todo references
     contact_user = db.relationship('Tender', backref=db.backref('User'), lazy=True)
     # manager_tender = db.relationship('Tender', backref=db.backref('User'), lazy=True)
@@ -354,15 +356,16 @@ def get_my_sql_connection():
 
 if __name__ == '__main__':
     db = get_db()
+    db.create_all()
 
-    conn = get_my_sql_connection()
-    cursor = conn.cursor()
-    query = """select task_id from tasks
-                order by task_id desc
-                limit 1;
-                """
-    cursor.execute(query)
-    print(cursor.fetchall()[0][0])
+    # conn = get_my_sql_connection()
+    # cursor = conn.cursor()
+    # query = """select task_id from tasks
+    #             order by task_id desc
+    #             limit 1;
+    #             """
+    # cursor.execute(query)
+    # print(cursor.fetchall()[0][0])
 
 
 

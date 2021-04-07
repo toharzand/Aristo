@@ -5,7 +5,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet" />
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
 
 <style>/* Add a black background color to the top navigation */
@@ -75,16 +76,31 @@ body {
 <body>
 <header>
   <div class="topnav">
-  <a class="active" href="/">דף הבית</a>
-  <a href="/login">היכנס</a>
-  <a href="/tenders">כל המכרזים</a>
-  <a href="/newTender">צור מכרז</a>
-  <a href="#settings" style="float: left">&#9881;</a>
-  <a href="#notification" class="notification" style="float: left">
-  <span>התראות</span>
+  <a class="active" href="{{ url_for('main.home') }}">דף הבית</a>
+
+    {% if current_user.is_authenticated %}
+    <a href="{{url_for('main.tenders')}}">המכרזים שלי</a>
+    <a href="{{url_for('main.newTender')}}">אשף המכרזים</a>
+    <a href="{{ url_for('auth.logout') }}" class="navbar-item"> יציאה</a>
+    <a href="#settings" style="float: left">&#9881;</a>
+    <a href="#notification" class="notification" style="float: left">
+  <span>
+      שלום
+      ,
+      {{current_user.first_name}}
+  </span>
   <span class="badge">3</span>
     <a>{% block navbar %}{% endblock %}</a>
 </a>
+      {% endif %}
+
+    <span>התראות</span>
+
+    {% if not current_user.is_authenticated %}
+    <a href="{{url_for('auth.login')}}">התחברות</a>
+    <a href="{{url_for('main.about')}}">עלינו</a>
+    {% endif %}
+
 </div>
 </header>
 <div>{% block content %}{% endblock %}</div>

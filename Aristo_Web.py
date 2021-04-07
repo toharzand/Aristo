@@ -1,79 +1,53 @@
-from flask import render_template, request, redirect, session, url_for, flash
+from flask import render_template, request, redirect, session, url_for, flash,Blueprint
 from models import *
 import time
 from datetime import datetime
 from engine import *
 import random
+from flask_login import login_required, current_user
 
 
-app = get_app()
 db = get_db()
 aristo_engine = Engine(db)
+main = Blueprint('main', __name__)
 
-@app.route("/")
-@app.route("/home")
+
+@main.route("/")
+@main.route("/home")
 def home():
     return render_template("home.html")
 
 
-@app.route("/login", methods=["POST", "GET"])
-def login():
-    if request.method == "POST":
-        session.permanent = True
-        req = request.form['tab']
-        if req == "sign-in":
-            print("here")
-            email = request.form['email_con']
-            password = request.form['pass_con']
-            users = User.query.all()
-            for user in users:
-                if user.password == password and user.email == email:
-                    print("user in database - ready to move to profile")
-                    flash("login successfully")
-                    session["user"] = user.email
-                    return redirect(url_for("user"))
-            flash("סיסמא או מייל שגויים - לחץ על הרשמה")
-        else:
-            print("not in sign in - in sign up")
-            first_name = request.form['first_name']
-            last_name = request.form['last_name']
-            new_pass = request.form['new_pass']
-            verify_pass = request.form['verify_pass']
-            new_email = request.form['new_email']
-            try:
-                if new_pass == verify_pass:
-                    emails = [u.email for u in User.query.all()]
-                    if validate_email(new_email) and new_email not in emails:
-                        if validate_password(new_pass):
-                            aristo_engine.add_task(AddUserTask(first_name,last_name,new_email,new_pass))
-                            return redirect(url_for("user"))
-                        else:
-                            flash("סיסמא חייבת להכיל אות גדולה, אות קטנה וספרה")
-                    else:
-                        flash("כתובת אימייל לא תקינה")
-                else:
-                    flash("אימות סיסמא נכשל")
-            except Exception as e:
-                print(e)
-    return render_template("login.html")
-
-
-@app.route("/user")
+@main.route("/user")
+@login_required
 def user():
     return render_template("user.html")
 
 
-@app.route("/tenders", methods=["POST", "GET"])
+@main.route("/tenders", methods=["POST", "GET"])
+@login_required
 def tenders():
+
+    def extract_names(values):
+        names = []
+        for val in values:
+            u_id = val[5]
+            user_name = User.query.filter_by(id=u_id).first()
+            user_name = f"{user_name.first_name} {user_name.last_name}"
+            names.append(user_name)
+        return names
+
+    print("tenders - became personal")
     if request.method == "POST":
         session.permanent = True
         try:
-            req = request.form['user']
-            return redirect(url_for("tender",tender=req))
-        except:
+            if request.form['user']:
+                return redirect(url_for("main.tender",tender=request.form['user']))
+        except Exception as e:
+            print(e)
             try:
                 req = request.form['new_tender']
-                return redirect(url_for("newTender"))
+                return redirect(url_for("main.newTender"))
             except Exception as e:
                 print(e)
                 print("here you need to sort/filter")
@@ -81,32 +55,40 @@ def tenders():
                     req = ('subject',request.form['subject'])
                     tenders = Tender.query.order_by(Tender.subject.desc()).all()
                     values = return_values(tenders)
-                    return render_template("tenders.html",values=values,len=len(values))
+                    print(values)
+                    return render_template("tenders.html",values=values,len=len(values),names=extract_names(values))
                 except Exception as e:
                     try:
                         req = ('finish_date',request.form['finish_date'])
                         tenders = Tender.query.order_by(Tender.finish_date.asc()).all()
                         values = return_values(tenders)
-                        return render_template("tenders.html", values=values, len=len(values))
+                        return render_template("tenders.html", values=values, len=len(values),names=extract_names(values))
                     except Exception as e:
-                        req = ('department',request.form['department'])
-                        tenders = Tender.query.order_by(Tender.department.desc()).all()
-                        values = return_values(tenders)
-                        return render_template("tenders.html", values=values, len=len(values))
-    values = return_values(tenders=Tender.query.all())
-    return render_template("tenders.html", values=values, len=len(values))
+                        try:
+                            req = ('department',request.form['department'])
+                            tenders = Tender.query.order_by(Tender.department.desc()).all()
+                            values = return_values(tenders)
+                            return render_template("tenders.html", values=values, len=len(values),names=extract_names(values))
+                        except:
+                            values = return_values(Tender.query.all())
+                            return render_template("tenders.html", values=values, len=len(values),
+                                                   names=extract_names(values))
+
+    values = return_values(Tender.query.all())
+    return render_template("tenders.html", values=values, len=len(values),names=extract_names(values))
 
 
-@app.route("/tender/<tender>", methods=["POST", "GET"])
+@main.route("/tender/<tender>", methods=["POST", "GET"])
+@login_required
 def tender(tender):
     print("enter tender")
     if request.method == 'POST':
         session.permanent = True
         try:
             if request.form.get('new_task') == 'new_task':
-                return redirect(url_for("newTask",tid=tender))
+                return redirect(url_for("main.newTask",tid=tender))
             else:
-                return redirect(url_for("task",tid=request.form['view_task']))
+                return redirect(url_for("main.task",tid=request.form['view_task']))
         except Exception as e:
             print(e)
     tender = Tender.query.filter_by(tid=tender).first()
@@ -123,7 +105,8 @@ def tender(tender):
                            block_tasks=block_tasks,complete_tasks=complete_tasks)
 
 
-@app.route("/newTender", methods=["POST", "GET"])
+@main.route("/newTender", methods=["POST", "GET"])
+@login_required
 def newTender():
     if request.method == 'POST':
         session.permanent = True
@@ -153,7 +136,7 @@ def newTender():
                 contact_guy = User.query.filter_by(id=tender.contact_user_from_department).first()
                 db.session.add(tender)
                 db.session.commit()
-                return redirect(url_for("tender",tender=tender.tid,contact_guy=contact_guy))
+                return redirect(url_for("main.tender",tender=tender.tid,contact_guy=contact_guy))
                 # return render_template("tender.html",tender=tender,contact_guy=contact_guy)
             except Exception as e:
                 print(e)
@@ -164,7 +147,8 @@ def newTender():
     return render_template("newTender.html")
 
 
-@app.route("/newTask/<tid>",methods=["POST", "GET"])
+@main.route("/newTask/<tid>",methods=["POST", "GET"])
+@login_required
 def newTask(tid):
     if request.method == "POST":
         print("new task")
@@ -219,7 +203,7 @@ def newTask(tid):
                 user_in_current_task = UserInTask(task_id, users, "god")
                 db.session.add(user_in_current_task)
                 db.session.commit()
-                return redirect(url_for("tender",tender=tid))
+                return redirect(url_for("main.tender",tender=tid))
             except Exception as e:
                 print(e)
                 db.session.rollback()
@@ -231,7 +215,8 @@ def newTask(tid):
 
 
 
-@app.route('/task/<tid>',methods=["POST", "GET"])
+@main.route('/task/<tid>',methods=["POST", "GET"])
+@login_required
 def task(tid):
     if request.method == "POST":
         session.permanent = True
@@ -244,7 +229,7 @@ def task(tid):
             query = f"""SELECT * FROM aristodb.tasksnotes
                         where task_id = {task_id};"""
             cursor.execute(query)
-            user_id = 1
+            user_id = current_user.id
             task_note = TaskNote(user_id,time,task_id,user_msg)
             try:
                 db.session.add(task_note)
@@ -254,26 +239,27 @@ def task(tid):
                 db.session.rollback()
     print("build task page")
     task = Task.query.filter_by(task_id=tid).first()
-    print(task.description)
-    contact_guy = UserInTask.query.filter_by(task_id = task.task_id).first()
-    contact_guy = User.query.filter_by(id=contact_guy.user_id).first()
     task_logs = TaskLog.query.filter_by(task_id = task.task_id).all()
-    notes = TaskNote.query.filter_by(task_id = task.task_id).all()
-    print(notes)
-    return render_template("task.html",task=task,contact_guy=contact_guy,task_logs=task_logs,task_notes = notes)
+    notes = TaskNote.query.filter_by(task_id = task.task_id).order_by("time").all()
+    names = []
+    for note in notes:
+        names.append(turn_id_to_name(note.user_id))
+    print(names)
+    return render_template("task.html",task=task,names = names,task_logs=task_logs,task_notes = notes,len=len(notes))
 
-@app.route("/about")
+@main.route("/about")
 def about():
     return render_template("about.html")
 
-@app.route("/test")
+@main.route("/test",methods=['POST','GET'])
 def test():
+    if request.method == 'POST':
+        print("here")
+        print(request.form)
+
     return render_template("test.html")
 
 
-if __name__ == '__main__':
-    # db.drop_all()
-    db.create_all()
-    # fill_db(50, db, User, Tender, Task, TaskLog, TaskNote, UserInTask)
-    aristo_engine.initiate()
-    app.run(debug=True)
+def turn_id_to_name(id):
+    user = User.query.filter_by(id=id).first()
+    return f"{user.first_name} {user.last_name}"
