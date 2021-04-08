@@ -20,7 +20,7 @@ class MFResponse:
         self.data = None
         self.complete = False
 
-    def get(self):
+    def get_data(self):
         return self.data
 
     def is_complete(self):
