@@ -21,7 +21,7 @@ app.permanent_session_lifetime = timedelta(minutes=5)  # time untill user forced
 config the connection to mysql database
 '''
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://itda:28031994@127.0.0.1:3306/aristodb'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///test.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app,session_options={"autoflush": False})  # create connection with database
 
@@ -341,12 +341,9 @@ def get_app():
     return app
 
 def get_my_sql_connection():
+    import sqlite3
     try:
-        connection = mysql.connector.connect(host="localhost",
-                                     user="itda",
-                                     passwd="28031994",
-                                     database="aristodb")
-
+        connection = sqlite3.connect('test.db')
         return connection
     except Error as e:
         print("error occurd")
