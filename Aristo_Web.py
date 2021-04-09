@@ -5,11 +5,16 @@ from datetime import datetime
 from engine import *
 import random
 from flask_login import login_required, current_user
+import MFTasks
 
 
 db = get_db()
 aristo_engine = Engine(db)
 main = Blueprint('main', __name__)
+
+
+def get_engine():
+    return aristo_engine
 
 
 @main.route("/")
@@ -21,13 +26,13 @@ def home():
 @main.route("/user")
 @login_required
 def user():
+
     return render_template("user.html")
 
 
 @main.route("/tenders", methods=["POST", "GET"])
 @login_required
 def tenders():
-
     def extract_names(values):
         names = []
         for val in values:
@@ -42,6 +47,14 @@ def tenders():
         session.permanent = True
         try:
             if request.form['user']:
+                # my_obj = aristo_engine.add_task(MFTasks.GetTendersPageRespons(request, db))
+                # # time.sleep(10)
+                # while not my_obj.is_complete():
+                #     time.sleep(0.5)
+                #     print("still waiting")
+                #     continue
+                # print("my obj",my_obj.is_complete())
+                print(request.form['user'])
                 return redirect(url_for("main.tender",tender=request.form['user']))
         except Exception as e:
             print(e)
@@ -88,6 +101,7 @@ def tender(tender):
             if request.form.get('new_task') == 'new_task':
                 return redirect(url_for("main.newTask",tid=tender))
             else:
+                print(request.form['view_task'])
                 return redirect(url_for("main.task",tid=request.form['view_task']))
         except Exception as e:
             print(e)
@@ -164,32 +178,21 @@ def newTask(tid):
                 print(len(subject))
                 try:
                     task_file = request.files['selectedFile']
-                    print("user enterd file")
-                    # print(task_file)
-                    print(type(task_file))
-                    print(dir(task_file))
                 except Exception as e:
                     print("user did not enterd file")
                     task_file = None
             if len(subject) > 15:
-                print("must be hereeeeeee")
                 flash("נושא המשימה - עד 15 אותיות")
                 return render_template("newTask.html")
-            # if not (type(user) == 'int'):
-            #     flash('must enter number for user identification')
             status = request.form['status']
-            print(status)
-            # add task to database
             odt = datetime.now()
             finish = None
             task = Task(tid, odt, deadline, finish, status, subject, description)
             try:
                 db.session.add(task)
                 db.session.commit()
-                print("enter_to_db - task")
             except Exception as e:
                 print(e)
-                print("not able to insert to db")
                 db.session.rollback()
             try:
                 conn = get_my_sql_connection()
@@ -203,14 +206,24 @@ def newTask(tid):
                 user_in_current_task = UserInTask(task_id, users, "god")
                 db.session.add(user_in_current_task)
                 db.session.commit()
-                return redirect(url_for("main.tender",tender=tid))
+                # print(task_id)
+                # task = Task.query.filter_by(task_id=task_id).first()
+                # task_logs = TaskLog.query.filter_by(task_id=task_id).all()
+                # notes = TaskNote.query.filter_by(task_id=task_id).order_by("time").all()
+                # names = []
+                # for note in notes:
+                #     names.append(turn_id_to_name(note.user_id))
+                # print("here")
+                # print(task.subject)
+                # print(task_logs)
+                # print(notes)
+                # print(names)
+                return redirect(url_for("main.task",tid=task_id))
             except Exception as e:
                 print(e)
                 db.session.rollback()
         except Exception as e:
             print(e)
-
-    print("here")
     return render_template("newTask.html")
 
 
@@ -239,8 +252,8 @@ def task(tid):
                 db.session.rollback()
     print("build task page")
     task = Task.query.filter_by(task_id=tid).first()
-    task_logs = TaskLog.query.filter_by(task_id = task.task_id).all()
-    notes = TaskNote.query.filter_by(task_id = task.task_id).order_by("time").all()
+    task_logs = TaskLog.query.filter_by(task_id = tid).all()
+    notes = TaskNote.query.filter_by(task_id = tid).order_by("time").all()
     names = []
     for note in notes:
         names.append(turn_id_to_name(note.user_id))
@@ -256,7 +269,6 @@ def test():
     if request.method == 'POST':
         print("here")
         print(request.form)
-
     return render_template("test.html")
 
 

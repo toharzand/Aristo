@@ -18,19 +18,19 @@ class MFTask:
 class MFResponse:
     def __init__(self):
         self.data = None
-        self.complete = False
+        self.done = False
 
-    def get(self):
+    def get_data(self):
         return self.data
 
     def is_complete(self):
-        return self.complete
+        return self.done
 
     def set_data(self,data):
         self.data = data
 
     def complete(self):
-        self.complete = True
+        self.done = True
 
 
 
@@ -73,9 +73,6 @@ class DailyTask(MFTask):
 
     def __repr__(self):
         return "DailyTask"
-
-
-
 
 class SendEmail(MFTask):
     def __init__(self, receiver ,content, subject="Aristo Updates"):
@@ -194,3 +191,12 @@ class CreateTenderFromTemplate(MFTask):
     def add_blocked_to_blocking(self, real_dependee_id, real_dependent_id):
         pass  # todo
 
+
+
+class GetTendersPageRespons(MFTask):
+    def __init__(self,request,db):
+        self.request = request
+        self.db = db
+
+    def process(self, engine=None):
+        return self.request.form['user']

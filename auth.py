@@ -4,6 +4,7 @@ from flask_login import login_user, logout_user, login_required
 from models import User, db
 from Workers import *
 from engine import *
+from MFTasks import *
 
 engine = Engine(db)
 auth = Blueprint('auth', __name__)
@@ -48,7 +49,7 @@ def login_post():
                     emails = [u.email for u in User.query.all()]
                     if validate_email(new_email) and new_email not in emails:
                         if validate_password(new_pass):
-                            user = User(first_name, last_name, new_email, generate_password_hash(new_pass, method='sha256'))
+                            add_task(AddUserTask(first_name, last_name, new_email, generate_password_hash(new_pass, method='sha256')))
                             try:
                                 db.session.add(user)
                                 db.session.commit()
