@@ -290,44 +290,47 @@ class TaskTemplate(db.Model):
     status = ["open", "close", "blocked", "on progress"]
     subject = short text(50)
     description = longer text(120)
+    time_delta = the amount of days the task should take
     """
 
     __tablename__ = "TasksTemplate"
-    task_id = db.Column(db.Integer, primary_key=True,autoincrement=True)
+    task_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     status = db.Column(db.VARCHAR(50))
     subject = db.Column(db.VARCHAR(50))
     description = db.Column(db.VARCHAR(120))
+    time_delta = db.Column(db.Integer)
     # todo references
     # task_1 = db.relationship('TaskDependenciesTemplate',backref='TasksTemplate',lazy=True)
 
-    def __init__(self, status, subject, description):
+    def __init__(self, status, subject, description, time_delta):
         self.status = status
         self.subject = subject
         self.description = description
+        self.time_delta = time_delta
 
 class TaskDependenciesTemplate(db.Model):
     """
-    dependend - the task that blocked the second task
-    dependee - the task that depend in another task
-    tender_id - the tender that contain the tasks
+    dependent - the task that's blocking the second task
+    dependee - the task that depend on another task
+    tender_id - the tender_template that contain the tasks
     """
     __tablename__ = "TasksDependenciesTemplate"
-    dependend_id = db.Column(db.Integer,db.ForeignKey('TasksTemplate.task_id'), primary_key=True,nullable=False)
-    dependend = db.relationship("TaskTemplate",foreign_keys="TaskDependenciesTemplate.dependend_id")
+    dependent_id = db.Column(db.Integer,db.ForeignKey('TasksTemplate.task_id'), primary_key=True,nullable=False)
+    dependent = db.relationship("TaskTemplate", foreign_keys="TaskDependenciesTemplate.dependent_id")
 
     dependee_id = db.Column(db.Integer,db.ForeignKey('TasksTemplate.task_id'), primary_key=True,nullable=False)
-    dependee = db.relationship("TaskTemplate",foreign_keys="TaskDependenciesTemplate.dependee_id")
+    dependee = db.relationship("TaskTemplate", foreign_keys="TaskDependenciesTemplate.dependee_id")
 
     tender_id = db.Column(db.Integer,db.ForeignKey('TendersTemplate.tid'), primary_key=True,nullable=False)
 
-    def __init__(self, dependend, dependee, tender_id):
-        self.dependend = dependend
+    def __init__(self, dependent, dependee, tender_id):
+        self.dependent = dependent
         self.dependee = dependee
         self.validate()
         self.tender_id = tender_id
 
     def validate(self):
-        if self.dependee == self.dependend:
+        if self.dependee == self.dependent:
             raise Exception
 
 

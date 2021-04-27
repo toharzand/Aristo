@@ -10,7 +10,19 @@ from MFTasks import *
 
 
 class Engine:
+    __instance = None
+
+    @staticmethod
+    def get_instance(db=None):
+        if Engine.__instance is None:
+            Engine(db)
+        return Engine.__instance
+
     def __init__(self, database):
+        if Engine.__instance is None:
+            Engine.__instance = self
+        else:
+            raise Exception("Engine singleton returned instead of re-created")
         self.main_act = collections.deque()
         self.connection_act = collections.deque()
         self.main_response = collections.deque()
@@ -123,6 +135,6 @@ def demo_task_adder(eng):
 
 if __name__ == "__main__":
     db = None
-    eng = Engine(db)
+    eng = Engine.get_instance(db)
     eng.initiate()
     demo_task_adder(eng)
