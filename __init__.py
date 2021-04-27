@@ -33,12 +33,10 @@ def flask_main_run():
 
 
 if __name__ == '__main__':
-    # engine2_0.main(flask_main_run)
-
     engine = Aristo_Web.get_engine()
     engine.initiate()
     app = get_app()
     app = manage_app(app)
     db = get_db()
     db.create_all()
-    app.run(debug=True,host="0.0.0.0")
+    app.run(debug=True, host="0.0.0.0")

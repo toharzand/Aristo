@@ -3,6 +3,7 @@ from MFTasks import DailyTask, MFResponse
 import threading
 import datetime as dt
 import time
+from __init__ import flask_main_run
 
 
 def get_futures():
@@ -106,15 +107,15 @@ def aristo_process_runner(process_name, queue, shutdown_event, cond, flags, futu
 
 #  -----------    main process    -----------
 
-def main_process(engine_kwargs, flask_callable_init):
+def main_process(engine_kwargs):
     engine = Engine.get_instance(engine_kwargs)
-    flask_callable_init()
+    flask_main_run()
 
 
 #  -----------    system initiation    -----------
 
-def initiate_aristo(process1, process2, engine_kwargs, flask_callable_init):
-    p3 = mp.Process(target=main_process, args=(engine_kwargs, flask_callable_init), daemon=True)
+def initiate_aristo(process1, process2, engine_kwargs):
+    p3 = mp.Process(target=main_process, args=(engine_kwargs,), daemon=True)
     process1.start()
     process2.start()
     p3.start()
@@ -123,7 +124,7 @@ def initiate_aristo(process1, process2, engine_kwargs, flask_callable_init):
     p3.join()
 
 
-def main(flaks_callable_init):
+def main():
     kwargs = {}
     manager = mp.Manager()
     flags = manager.dict({"short": False, "long": False})
@@ -142,7 +143,7 @@ def main(flaks_callable_init):
     long_tasker = mp.Process(target=aristo_process_runner, daemon=True,
                              args=("long", kwargs["long_queue"], kwargs["shutdown_event"], kwargs["long_cond"]
                                    , flags, futures, kwargs["response_cond"]))
-    initiate_aristo(short_tasker, long_tasker, kwargs, flaks_callable_init)
+    initiate_aristo(short_tasker, long_tasker, kwargs)
 
 
 if __name__ == '__main__':
