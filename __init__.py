@@ -1,5 +1,6 @@
 from flask_login import LoginManager
 from models import get_db, get_app
+import Aristo_Web
 
 
 def manage_app(app):
@@ -22,6 +23,8 @@ def manage_app(app):
     return app
 
 if __name__ == '__main__':
+    engine = Aristo_Web.get_engine()
+    engine.initiate()
     app = get_app()
     app = manage_app(app)
     db = get_db()

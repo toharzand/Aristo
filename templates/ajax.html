@@ -1,0 +1,57 @@
+
+{% extends "base.html" %}
+{% block title %}tender{% endblock %}
+
+{% block content %}
+
+<body>
+        <h1 id="header">Hellp</h1>
+        <select dir="rtl" name="status" id="status" onchange="pingNewColor()">
+          <option value="" disabled selected>שנה סטטוס</option>
+          <option value="yellow" id="yellow">&#128993;</option>
+          <option value="red">&#128308;</option>
+          <option value="green">&#128994;</option>
+        </select>
+
+
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.0/jquery.min.js"></script>
+
+
+<script type="text/javascript">
+
+	console.log("you are in function")
+
+	$(function(){
+		window.setInterval(function(){
+			pingNewColor()
+		},1000)
+	
+	function pingNewColor(){
+		try{
+		console.log("here")
+		var z = document.getElementById('status').value
+		console.log("log - value of status: " + z)
+		}catch{
+			console.log("problem occurud")
+			var z = null
+			console.log(z)
+		}
+		// $.ajax({
+		// 	url:"/update_decimal",
+		// 	type: "POST",
+		// 	dataType: "json",
+		// 	success: function(data){
+		// 		$(change_status).replaceWith(data)
+		// 	} 
+		// });
+	}
+
+});
+</script>
+
+<div id="change_status">
+	{{x}}
+</div>
+
+{% endblock %}

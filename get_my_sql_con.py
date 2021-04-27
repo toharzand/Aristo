@@ -6,13 +6,14 @@ def get_connection():
     try:
         connection = mysql.connector.connect(host="localhost",
                                      user="itda",
-                                     passwd="28031994",
-                                     database="new_tender")
+                                     password="28031994",
+                                     database="aristodb")
 
         return connection
     except Error as e:
         print("error occurd")
         print(e)
+        return
 
 
 if __name__ == '__main__':

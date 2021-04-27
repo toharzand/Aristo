@@ -165,17 +165,27 @@ body {font-family: Arial, Helvetica, sans-serif;}
 <div dir="rtl" align="center" style="background-color:white;">
   <p>&nbsp;</p>
 
-<h1 align="center">שם המשימה: {{task.subject}}</h1>
+<form action="#" method="post">
+  <select dir="rtl" name="user" id="user" onchange="this.form.submit()" style="float:right;">
+    <option value="" disabled selected>הוסף משתמש +</option>
+    {% for user in all_users %}
+      <option value="{{user.id}}">{{user.first_name}} {{user.last_name}}</option>
+    {% endfor %}
+  </select>
+</form>
+
+
+<h1 style="float:center;margin-left:250px;">שם המשימה: {{task.subject}}</h1>
 <table style="width:100%">
   <tr>
     <th >סטטוס</th>
-    <th>אנשי קשר</th>
+    <th>יוצר/ת המשימה</th>
     <th>תאריך תחילת משימה</th>
     <th>תאריך סיום משוער</th>
   </tr>
     <tr>
     <td>{{task.status}}</td>
-    <td>זמני כרגע</td>
+    <td>{{user.first_name}} {{user.last_name}}</td>
     <td>{{task.odt.date()}}</td>
     <td>{{task.deadline.date()}}</td>
     </tr>
@@ -214,11 +224,26 @@ body {font-family: Arial, Helvetica, sans-serif;}
   {% endif %}
 </div>
 
-<div class="div div2" dir="rtl" style="background-color: #6495ED; float:left; width:50%; height:500px; margin-left:100px; overflow: scroll;">
+
+<div class="div div2" dir="rtl" style="background-color: #6495ED; float:left; width:15%; height:500px;overflow: scroll;margin-left:20px;">
+  <p style="font-size:28px; float:center;" align="center">משתמשים</p>
+  {% if users_in_tasks != [] %}
+    {% for user in users_in_tasks %}
+      <p style="font-size:16px; float:center;" align="center">@{{user.first_name}}_{{user.last_name}}</p>
+    {% endfor %}
+  {% else %}
+    <p style="font-size:16px; float:center;" align="center">אין משתמשים להצגה</p>
+    {% for _ in range(10) %}
+      <p>&nbsp;</p>
+    {% endfor %}
+  {% endif %}
+</div>
+
+<div class="div div2" dir="rtl" style="background-color: #6495ED; float:left; width:35%; height:500px; margin-left:50px; overflow: scroll;">
     <p style="font-size:28px; float:center;" align="center">צ'אט</p>
   {% if task_notes %}
     {% for i in range(len) %}
-      <p style="font-size:16px; float:center;" align="right">
+      <p style="font-size:20px; float:center;" align="right">
         מאת:
         {{names[i]}}
         -
@@ -226,7 +251,7 @@ body {font-family: Arial, Helvetica, sans-serif;}
       </p>
     {% endfor %}
   {% else %}
-    <p style="font-size:12px; float:center;" align="center">אין הודעות בצ'אט</p>
+    <p style="font-size:20px; float:center;" align="center">אין הודעות בצ'אט</p>
     {% for _ in range(10) %}
       <p>&nbsp;</p>
     {% endfor %}

@@ -90,9 +90,41 @@ background-color: #C0C0C0;
 }
 
 </style>
-
+<form action="#" method="post" dir="rtl">
 <p>&nbsp;</p>
 <div dir="rtl" align="center">
+
+
+
+<button type="button" class="btn btn-primary" data-toggle="modal" data-target="#exampleModal" style="display: inline-block;float: left;background-color: #B22222;color:white;">
+  מחיקת מכרז
+</button>
+  <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel" dir="rtl" align="center">מחיקת מכרז</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="float: left;">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body" dir="rtl" align="right">
+        אנא אשרו כי ברצונכם למחוק את המכרז
+      </div>
+      <div class="modal-footer">
+        <button type="button" name="cancel" value="cancel" class="btn btn-secondary" data-dismiss="modal" dir="rtl">ביטול</button>
+        <button type="submit" name="delete" value="delete" class="btn btn-primary"  dir="rtl" style="background-color: red; color:white;">מחיקה</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+
+
+
+
 <h1 align="center">מכרז מספר: {{tender.protocol_number}}</h1>
 <table style="width:100%">
   <tr>
@@ -120,7 +152,6 @@ background-color: #C0C0C0;
 </div>
 
 
-<form action="#" method="post" dir="rtl">
     <div align="center">
       <button type="submit" dir="rtl" name="new_task" value="new_task" class="button button1">יצירת משימה חדשה +</button>
     </div>
@@ -131,16 +162,16 @@ background-color: #C0C0C0;
         <p style="font-size:28px;">משימות פתוחות</p>
     {% for task in open_tasks %}
       <div class="div div2" style="background-color: #6495ED;">
-        <p style="float:right; display: inline-block;margin-right:5px; ">{{task.subject}}</p>
+        <p style="float:right; display: inline-block;margin-right:5px; ">{{task.subject[:15]}}</p>
         <p style="float:center; display: inline-block;">{{task.deadline.date()}}</p>
-        <p style="float:left; display: inline-block; margin-left:5px;">מנהל המשימה</p>
+        <p style="float:left; display: inline-block; margin-left:5px;">{{get_user_name(task.task_owner_id).first_name}} {{get_user_name(task.task_owner_id).last_name}}</p>
         <p>&nbsp;<p/>
         <button type="submit" name="view_task" id="view_task" value="{{task.task_id}}" dir="rtl" class="button button1" style="float:right;">צפה במשימה</button>
-        <select dir="rtl" name="status" id="status">
+        <select dir="rtl" name="status" id="status" value="{{task.task_id}}" onchange="this.form.submit()">
           <option value="" disabled selected>שנה סטטוס</option>
-          <option value="yellow">&#128993;</option>
-          <option value="red">&#128308;</option>
-          <option value="green">&#128994;</option>
+          <option value="{{[2,task.task_id]}}">&#128993;</option>
+          <option value="{{[3,task.task_id]}}">&#128308;</option>
+          <option value="{{[4,task.task_id]}}">&#128994;</option>
         </select>
       </div>
 {% endfor %}
@@ -153,16 +184,16 @@ background-color: #C0C0C0;
         <p style="font-size:28px;">משימות בעבודה</p>
     {% for task in on_prog_tasks %}
       <div class="div div2" style="background-color: #fcba03;">
-        <p style="float:right; display: inline-block;margin-right:5px; ">{{task.subject}}</p>
+        <p style="float:right; display: inline-block;margin-right:5px; ">{{task.subject[:15]}}</p>
         <p style="float:center; display: inline-block;">{{task.deadline.date()}}</p>
-        <p style="float:left; margin-left:5px; display: inline-block;">מנהל המשימה</p>
+        <p style="float:left; margin-left:5px; display: inline-block;">{{get_user_name(task.task_owner_id).first_name}} {{get_user_name(task.task_owner_id).last_name}}</p>
         <p>&nbsp;<p/>
         <button type="submit" name="view_task" id="view_task" value="{{task.task_id}}" dir="rtl" class="button button1" style="float:right;">צפה במשימה</button>
-        <select dir="rtl" name="status" id="status">
+        <select dir="rtl" name="status" id="status" onchange="this.form.submit()">
           <option value="" disabled selected>שנה סטטוס</option>
-          <option value="blue">&#128309;</option>
-          <option value="red">&#128308;</option>
-          <option value="green">&#128994;</option>
+          <option value="{{[1,task.task_id]}}">&#128309;</option>
+          <option value="{{[3,task.task_id]}}">&#128308;</option>
+          <option value="{{[4,task.task_id]}}">&#128994;</option>
         </select>
       </div>
     {% endfor %}
@@ -175,16 +206,16 @@ background-color: #C0C0C0;
         <p style="font-size:28px; color:white">משימות ממתינות</p>
         {% for task in block_tasks %}
       <div class="div div2" style="background-color: #b30c1d; color:white">
-        <p style="float:right; display: inline-block;margin-right:5px; ">{{task.subject}}</p>
+        <p style="float:right; display: inline-block;margin-right:5px; ">{{task.subject[:15]}}</p>
         <p style="float:center; display: inline-block;">{{task.deadline.date()}}</p>
-        <p style="float:left; margin-left:5px; display: inline-block;">מנהל המשימה</p>
+        <p style="float:left; margin-left:5px; display: inline-block;">{{get_user_name(task.task_owner_id).first_name}} {{get_user_name(task.task_owner_id).last_name}}</p>
         <p>&nbsp;<p/>
         <button type="submit" name="view_task" id="view_task" value="{{task.task_id}}" dir="rtl" class="button button1" style="float:right;">צפה במשימה</button>
-        <select dir="rtl" name="status" id="status">
+        <select dir="rtl" name="status" id="status" onchange="this.form.submit()">
           <option value="" disabled selected>שנה סטטוס</option>
-          <option value="blue">&#128309;</option>
-          <option value="yellow">&#128993;</option>
-          <option value="green">&#128994;</option>
+          <option value="{{[1,task.task_id]}}">&#128309;</option>
+          <option value="{{[2,task.task_id]}}">&#128993;</option>
+          <option value="{{[4,task.task_id]}}">&#128994;</option>
         </select>
       </div>
     {% endfor %}
@@ -197,16 +228,16 @@ background-color: #C0C0C0;
         <p style="font-size:28px;">משימות שהושלמו</p>
             {% for task in complete_tasks %}
       <div class="div div2" style="background-color: #86B187; ">
-        <p style="float:right; display: inline-block;margin-right:5px; ">{{task.subject}}</p>
+        <p style="float:right; display: inline-block;margin-right:5px; ">{{task.subject[:15]}}</p>
         <p style="float:center; display: inline-block;">{{task.deadline.date()}}</p>
-        <p style="float:left; margin-left:5px; display: inline-block;">מנהל המשימה</p>
+        <p style="float:left; margin-left:5px; display: inline-block;">{{get_user_name(task.task_owner_id).first_name}} {{get_user_name(task.task_owner_id).last_name}}</p>
         <p>&nbsp;<p/>
         <button type="submit" name="view_task" id="view_task" value="{{task.task_id}}" dir="rtl" class="button button1" style="float:right;">צפה במשימה</button>
-        <select dir="rtl" name="status" id="status">
+        <select dir="rtl" name="status" id="status" onchange="this.form.submit()">
           <option value="" disabled selected>שנה סטטוס</option>
-          <option value="blue">&#128309;</option>
-          <option value="yellow">&#128993;</option>
-          <option value="red">&#128308;</option>
+          <option value="{{[1,task.task_id]}}">&#128309;</option>
+          <option value="{{[2,task.task_id]}}">&#128993;</option>
+          <option value="{{[3,task.task_id]}}">&#128308;</option>
         </select>
       </div>
     {% endfor %}

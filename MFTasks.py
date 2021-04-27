@@ -1,9 +1,10 @@
 from EmailHandler import *
-from engine2_0 import *
+import time
 try:
     from models import *
 except Exception as e:
     print("couldn't import aristoDB")
+from datetime import datetime
 
 
 class MFTask:
@@ -69,8 +70,189 @@ class MFResponse:
 
     def __repr__(self):
         return "response of task - " + self.__creator_id
+        self.done = True
 
 
+class DeleteTenderDependencies(MFTask):
+
+    '''
+        @Name: DeleteTenderDependencies
+        @Parameters:
+                    Abstract MFTask object
+                    tid: tender id to delete
+        @Do:
+            get the deleted tender and delete all dependencies (task,tasd notes and task logs)
+        @Return:
+                None
+    '''
+    def __init__(self, tid):
+        super().__init__()
+        self.tid = tid
+
+    def process(self, engine=None):
+        print("here - in the engine. starts to delete items")
+        # delete related tasks
+        for task in Task.query.filter_by(tender_id=self.tid).all():
+
+            task_id = task.task_id
+
+            for task_note in TaskNote.query.filter_by(task_id=task_id).all():
+                try:
+                    print("start deleting task notes")
+                    db.session.delete(task_note)
+                    db.session.commit()
+                    print("succuusfully delete task notes")
+                except Exception as e:
+                    db.session.rollback()
+
+            for task_log in TaskLog.query.filter_by(task_id=task_id).all():
+                try:
+                    db.session.delete(task_log)
+                    db.session.commit()
+                    print("succuusfully delete task logs")
+                except:
+                    db.session.rollback()
+
+            for user_in_task in UserInTask.query.filter_by(task_id=task_id).all():
+                try:
+                    db.session.delete(user_in_task)
+                    db.session.commit()
+                    print("succuusfully delete user_in_task")
+                except:
+                    db.session.rollback()
+
+            try:
+                db.session.delete(task)
+                db.session.commit()
+                print("task deleted")
+            except Exception as e:
+                db.session.rollback()
+                print(e)
+
+
+class addNotificationTender(MFTask):
+    def __init__(self,tender,subject,user_id,type):
+        super().__init__()
+        self.tender = tender
+        self.subject = subject
+        self.user_id = user_id
+        self.type = type
+        self.created_time = datetime.now()
+
+    def process(self, engine=None):
+        try:
+            notification = Notification(user_id=self.user_id,status=False,subject=self.subject,type=self.type,created_time=self.created_time)
+            db.session.add(notification)
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            print(e)
+        conn = get_my_sql_connection()
+        cursor = conn.cursor()
+        query = """select nid
+                    from notifications
+                    order by nid desc
+                    limit 1;
+                """
+        cursor.execute(query)
+        nid = cursor.fetchone()[0]
+        print(nid)
+        notification_tender = NotificationInTender(nid,self.tender)
+        try:
+            db.session.add(notification_tender)
+            db.session.commit()
+        except Exception as e:
+            print(e)
+            db.session.rollback()
+
+class addNotificationTask(MFTask):
+    def __init__(self,task,subject,user_id,type):
+        super().__init__()
+        self.task = task
+        self.subject = subject
+        self.user_id = user_id
+        self.type = type
+        self.created_time = datetime.now()
+
+    def process(self, engine=None):
+        print("adding new task notification")
+        try:
+            notification = Notification(user_id=self.user_id,status=False,subject=self.subject,type=self.type,created_time=self.created_time)
+            db.session.add(notification)
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            raise e
+        conn = get_my_sql_connection()
+        cursor = conn.cursor()
+        query = """select nid
+                    from notifications
+                    order by nid desc
+                    limit 1;
+                """
+        cursor.execute(query)
+        nid = cursor.fetchone()
+        notification_task = NotificationInTask(nid[0],self.task)
+        try:
+            db.session.add(notification_task)
+            db.session.commit()
+        except Exception as e:
+            print(e)
+            db.session.rollback()
+
+
+class addUserToTask(MFTask):
+    def __init__(self,user_id,task_id,type):
+        super().__init__()
+        self.user_id = user_id
+        self.task_id = task_id
+        self.type = type
+        self.created_time = datetime.now()
+
+    def process(self, engine=None):
+        try:
+            print("raise notification")
+            db.session.add(Notification(self.user_id,0,"הוסיפו אותך למשימה",self.type,created_time=self.created_time))
+            db.session.commit()
+        except:
+            db.session.rollback()
+        try:
+            nid = Notification.query.order_by(Notification.nid.desc()).first()
+            print(nid)
+            db.session.add(NotificationInTask(nid.nid,self.task_id))
+            db.session.commit()
+            print("new task notification added")
+        except Exception as e:
+            db.session.rollback()
+            print("cannot enter task notification")
+            print(e)
+
+
+
+
+class addNotificationsChat(MFTask):
+    def __init__(self,task_id):
+        super().__init__()
+        self.task_id = task_id
+        self.type = "משימה"
+        self.created_time = datetime.now()
+
+    def process(self, engine=None):
+        try:
+            print(f"raise notification - someone send massage in chat - task number {self.task_id}")
+            for user_in_task in UserInTask.query.filter_by(task_id=self.task_id):
+                db.session.add(Notification(user_in_task.user_id,0,"יש הודעה חדשה בצ'אט",self.type,self.created_time))
+                db.session.commit()
+                # print("commited - new chat notification")
+                nid = Notification.query.order_by(Notification.nid.desc()).first()
+                db.session.add(NotificationInTask(nid.nid,task_id=self.task_id))
+                db.session.commit()
+            print("data commited succssfully")
+        except Exception as e:
+            db.session.rollback()
+            print("session rolled back! - cannot enter notifications")
+            print(e)
+            raise e
 
 
 class DemoTask(MFTask):
@@ -111,9 +293,6 @@ class DailyTask(MFTask):
 
     def __repr__(self):
         return "DailyTask"
-
-
-
 
 class SendEmail(MFTask):
     def __init__(self, receiver ,content, subject="Aristo Updates"):
@@ -274,3 +453,12 @@ class CreateTenderFromTemplate(MFTask):
         """
         pass  # todo
 
+
+
+class GetTendersPageRespons(MFTask):
+    def __init__(self,request,db):
+        self.request = request
+        self.db = db
+
+    def process(self, engine=None):
+        return self.request.form['user']
