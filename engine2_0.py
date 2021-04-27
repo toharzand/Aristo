@@ -106,15 +106,15 @@ def aristo_process_runner(process_name, queue, shutdown_event, cond, flags, futu
 
 #  -----------    main process    -----------
 
-def main_process(engine_kwargs):
+def main_process(engine_kwargs, flask_callable_init):
     engine = Engine.get_instance(engine_kwargs)
-    #  todo - initiate flask app here
+    flask_callable_init()
 
 
 #  -----------    system initiation    -----------
 
-def initiate_aristo(process1, process2, engine_kwargs):
-    p3 = mp.Process(target=main_process, args=(engine_kwargs,), daemon=True)
+def initiate_aristo(process1, process2, engine_kwargs, flask_callable_init):
+    p3 = mp.Process(target=main_process, args=(engine_kwargs, flask_callable_init), daemon=True)
     process1.start()
     process2.start()
     p3.start()
@@ -123,7 +123,7 @@ def initiate_aristo(process1, process2, engine_kwargs):
     p3.join()
 
 
-if __name__ == '__main__':
+def main(flaks_callable_init):
     kwargs = {}
     manager = mp.Manager()
     flags = manager.dict({"short": False, "long": False})
@@ -142,4 +142,27 @@ if __name__ == '__main__':
     long_tasker = mp.Process(target=aristo_process_runner, daemon=True,
                              args=("long", kwargs["long_queue"], kwargs["shutdown_event"], kwargs["long_cond"]
                                    , flags, futures, kwargs["response_cond"]))
-    initiate_aristo(short_tasker, long_tasker, kwargs)
+    initiate_aristo(short_tasker, long_tasker, kwargs, flaks_callable_init)
+
+
+if __name__ == '__main__':
+    main()
+    # kwargs = {}
+    # manager = mp.Manager()
+    # flags = manager.dict({"short": False, "long": False})
+    # kwargs["flags"] = flags
+    # futures = manager.dict()  # should be weak hash-map
+    # kwargs["futures"] = futures  # contains - { mf task id : [response ,  condition for notify] }
+    # kwargs["short_queue"] = mp.Queue()
+    # kwargs["short_cond"] = mp.Condition()
+    # kwargs["long_queue"] = mp.Queue()
+    # kwargs["long_cond"] = mp.Condition()
+    # kwargs["response_cond"] = mp.Condition()
+    # kwargs["shutdown_event"] = mp.Event()
+    # short_tasker = mp.Process(target=aristo_process_runner, daemon=True,
+    #                           args=("short", kwargs["short_queue"], kwargs["shutdown_event"], kwargs["short_cond"]
+    #                                 , flags, futures, kwargs["response_cond"]))
+    # long_tasker = mp.Process(target=aristo_process_runner, daemon=True,
+    #                          args=("long", kwargs["long_queue"], kwargs["shutdown_event"], kwargs["long_cond"]
+    #                                , flags, futures, kwargs["response_cond"]))
+    # initiate_aristo(short_tasker, long_tasker, kwargs)

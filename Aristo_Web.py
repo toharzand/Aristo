@@ -10,7 +10,7 @@ import Workers
 
 
 db = get_db()
-aristo_engine = Engine.get_instance(db)
+aristo_engine = Engine.get_instance()
 main = Blueprint('main', __name__)
 
 
