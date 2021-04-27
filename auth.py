@@ -5,7 +5,7 @@ from models import User, db
 from Workers import *
 from engine import *
 
-engine = Engine(db)
+engine = Engine.get_instance(db)
 auth = Blueprint('auth', __name__)
 
 

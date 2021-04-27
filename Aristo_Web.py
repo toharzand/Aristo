@@ -8,7 +8,7 @@ from flask_login import login_required, current_user
 
 
 db = get_db()
-aristo_engine = Engine(db)
+aristo_engine = Engine.get_instance(db)
 main = Blueprint('main', __name__)
 
 
