@@ -13,15 +13,15 @@ from flask_login import UserMixin
 
 
 app = Flask(__name__, template_folder='templates',
-            static_folder=r'C:\Users\itay dar\Desktop\פרויקטים\tender\hello_flask\git checker\aristo\templates')
+            static_folder=r'C:\Users\itay dar\Desktop\projects\tender\hello_flask\git checker\aristo\templates')
 app.secret_key = "tenderly_secret_key"  # secret app for the session to keep data
-app.permanent_session_lifetime = timedelta(minutes=5)  # time untill user forced to log out
+app.permanent_session_lifetime = timedelta(minutes=10)  # time untill user forced to log out
 
 '''
 config the connection to mysql database
 '''
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///test.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://itda:28031994@127.0.0.1:3306/aristodb'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app,session_options={"autoflush": False})  # create connection with database
 
@@ -53,6 +53,8 @@ class User(UserMixin,db.Model):
     file = db.relationship('FileInTask', backref=db.backref('User'), lazy=True)
     comment_in_task = db.relationship('TaskNote', backref=db.backref('User'), lazy=True)
     user_task_log = db.relationship('TaskLog', backref=db.backref('User'), lazy=True)
+    user_notification = db.relationship('Notification',backref=db.backref('User'), lazy=True)
+    task_owner_user = db.relationship('Task', backref=db.backref('User'), lazy=True)
 
     def __init__(self, first_name, last_name, email, password):
         self.first_name = first_name
@@ -93,7 +95,9 @@ class Tender(db.Model):
     contact_user_from_department = db.Column(db.Integer, db.ForeignKey('Users.id'), nullable=False)
     tender_manager = db.Column(db.VARCHAR(50),nullable=False)
     # todo references
-    task = db.relationship('Task', backref='Tender', lazy=True)
+    task = db.relationship('Task', backref='Tender',cascade="all,delete", lazy=True)
+    notification_in_tender = db.relationship('NotificationInTender',cascade="all,delete", backref='Tenders', lazy=True)
+
 
     def __init__(self, protocol_number, tenders_committee_Type, procedure_type, subject, department, start_date,
                  finish_date, contact_user_from_department, tender_manager):
@@ -122,6 +126,7 @@ class Task(db.Model):
     __tablename__ = "Tasks"
     task_id = db.Column(db.Integer, primary_key=True,autoincrement=True)
     tender_id = db.Column(db.Integer, db.ForeignKey("Tenders.tid"))
+    task_owner_id = db.Column(db.Integer,db.ForeignKey("Users.id"))
     odt = db.Column(db.DateTime(255), nullable=False)
     deadline = db.Column(db.DateTime(255), nullable=False)
     finish = db.Column(db.DateTime(255))
@@ -130,13 +135,15 @@ class Task(db.Model):
     subject = db.Column(db.VARCHAR(50))
     description = db.Column(db.VARCHAR(120))
     # todo references
-    task_users = db.relationship('UserInTask', backref='Tasks', lazy=True)
-    task_logs = db.relationship('TaskLog', backref='Tasks', lazy=True)
-    task_notes = db.relationship('TaskNote', backref='Tasks', lazy=True)
-    task_files = db.relationship('FileInTask', backref='Tasks', lazy=True)
+    task_users = db.relationship('UserInTask', backref='Tasks',cascade="all,delete", lazy=True)
+    task_logs = db.relationship('TaskLog', backref='Tasks',cascade="all,delete", lazy=True)
+    task_notes = db.relationship('TaskNote', backref='Tasks',cascade="all,delete", lazy=True)
+    task_files = db.relationship('FileInTask', backref='Tasks',cascade="all,delete", lazy=True)
+    notification_in_tasks = db.relationship('NotificationInTask',cascade="all,delete", backref='Tasks', lazy=True)
 
-    def __init__(self, tender_id, odt, deadline, finish, status, subject, description):
+    def __init__(self, tender_id,task_owner_id, odt, deadline, finish, status, subject, description):
         self.tender_id = tender_id
+        self.task_owner_id = task_owner_id
         self.odt = odt
         self.deadline = deadline
         self.finish = finish
@@ -330,8 +337,45 @@ class TaskDependenciesTemplate(db.Model):
         if self.dependee == self.dependend:
             raise Exception
 
+class Notification(db.Model):
+
+    __tablename__ = "Notifications"
+    nid = db.Column(db.Integer, primary_key=True,autoincrement=True)
+    user_id = db.Column(db.Integer,db.ForeignKey('Users.id'),nullable=True)
+    status = db.Column(db.Boolean, default=False, nullable=False)
+    subject = db.Column(db.VARCHAR(50))
+    type = db.Column(db.VARCHAR(50))
+    created_time = db.Column(db.DateTime(255))
+    # todo references
+    notification_in_tender = db.relationship('NotificationInTender', backref='Notification', lazy=True)
+    notification_in_task = db.relationship('NotificationInTask', backref='Notification', lazy=True)
 
 
+    def __init__(self,user_id,status,subject,type,created_time):
+        self.user_id = user_id
+        self.status = status
+        self.subject = subject
+        self.type = type
+        self.created_time = created_time
+
+class NotificationInTender(db.Model):
+
+    __tablename__ = "NotificationsInTender"
+    nid = db.Column(db.Integer,db.ForeignKey('Notifications.nid'), primary_key=True,nullable=False)
+    tender_id = db.Column(db.Integer,db.ForeignKey('Tenders.tid'),primary_key=True,nullable=False)
+
+    def __init__(self,nid,tender_id):
+        self.nid = nid
+        self.tender_id = tender_id
+
+class NotificationInTask(db.Model):
+    __tablename__ = "NotificationsInTask"
+    nid = db.Column(db.Integer,db.ForeignKey('Notifications.nid'), primary_key=True,nullable=False)
+    task_id = db.Column(db.Integer,db.ForeignKey('Tasks.task_id'),primary_key=True,nullable=False)
+
+    def __init__(self,nid,task_id):
+        self.nid = nid
+        self.task_id = task_id
 
 
 def get_db():
@@ -343,7 +387,11 @@ def get_app():
 def get_my_sql_connection():
     import sqlite3
     try:
-        connection = sqlite3.connect('test.db')
+        connection = mysql.connector.connect(host="localhost",
+                                             user="itda",
+                                             passwd="28031994",
+                                             database="aristodb")
+
         return connection
     except Error as e:
         print("error occurd")
@@ -353,7 +401,24 @@ def get_my_sql_connection():
 
 if __name__ == '__main__':
     db = get_db()
+    db.drop_all()
     db.create_all()
+    fill_db(30,db,User,Tender,Task,TaskLog,TaskNote,UserInTask)
+
+    # enter_fake_users_to_db(30,db,User)
+    # enter_tenders_to_db(Tender,db,5)
+    # enter_fake_tasks_to_db(Tender=Tender,Task=Task,db=db)
+
+    # notification = Notification(1,"לא נקרא","איתי דר הוסיף אותך","הוספה")
+    # try:
+    #     db.session.add(notification)
+    #     db.session.commit()
+    # except Exception as e:
+    #     print(e)
+
+
+
+
 
     # conn = get_my_sql_connection()
     # cursor = conn.cursor()

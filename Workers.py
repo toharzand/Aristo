@@ -5,6 +5,7 @@ import numpy as np
 from tqdm import tqdm
 from models import *
 import models
+from flask_login import current_user
 
 
 def enter_tenders_to_db(Tenders,db,number_of_tenders_to_add):
@@ -35,7 +36,7 @@ def enter_tenders_to_db(Tenders,db,number_of_tenders_to_add):
         depar = random.choice(department_lst)
         start_date = fake.past_date()
         finish_date = fake.future_date()
-        cont = random.choice([i for i in range(1,50)])
+        cont = random.choice([i for i in range(1,30)])
         manager = random.choice(cont_users)
         tender = Tenders(protocol, comm, proc, subject, depar, start_date, finish_date, cont, manager)
         try:
@@ -64,17 +65,17 @@ def return_values(tenders,filter_by=None,order_by=None):
     #     tenders = Tender.query.all()
     conn = models.get_my_sql_connection()
     cursor = conn.cursor()
-    query = """ select distinct tender_id from users u
+    query = f""" select distinct tender_id from users u
                 inner join usersintasks ut
                 on u.id=ut.user_id
                 inner join tasks t
                 on ut.task_id = t.task_id
+                where u.id = {current_user.id}
             """
     cursor.execute(query)
     all_tenders_id = cursor.fetchall()
-    print(all_tenders_id)
-    tenders_to_present = [tender for tender in tenders if tender.tid in all_tenders_id]
-    print(tenders_to_present)
+    print("here after change")
+    print("all tenders id to present",tenders)
     days = [(t.finish_date - datetime.now()).days for t in tenders]
     values = []
     for i,tender in enumerate(tenders):
@@ -153,7 +154,7 @@ def enter_fake_tasks_to_db(Tender,Task,db):
                 dead_line = fake.future_date()
                 subject = random.choice(['יועמ"ש','ביטחון','חשבות'])
                 description = f"זהו תיאור המשימה"
-                task = Task(tender_id=tender_id,odt=odt,deadline=dead_line,finish=None,status=status,subject=subject,description=description)
+                task = Task(tender_id=tender_id,task_owner_id=5,odt=odt,deadline=dead_line,finish=None,status=status,subject=subject,description=description)
                 try:
                     db.session.add(task)
                     db.session.commit()
@@ -317,7 +318,22 @@ def insert_data_to_dependencies():
     #
     # for tender in all_tenders:
 
+def get_last_tender_id():
+    conn = models.get_my_sql_connection()
+    cursor = conn.cursor()
+    query = """select tid
+                from tenders
+                order by tid desc
+                limit 1;
+            """
+    cursor.execute(query)
+    return cursor.fetchone()
+
 
 
 def function_for_sorting(request,Tender,db):
     pass
+
+
+if __name__ == '__main__':
+    fill_db(30,db,User,Tender,Task,TaskLog,TaskNote,UserInTask)
