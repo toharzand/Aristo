@@ -67,15 +67,12 @@ def tenders():
                 try:
                     req = ('subject',request.form['subject'])
                     print("choose by subject")
-                    tenders = Tender.query.order_by(Tender.subject.desc()).all()
-                    values = return_values(tenders)
-                    print("values",values)
+                    values = get_tenders_to_show(sorted='subject')
                     return render_template("tenders.html",values=values,len=len(values),names=extract_names(values))
                 except Exception as e:
                     try:
                         req = ('finish_date',request.form['finish_date'])
-                        tenders = Tender.query.filter_by(id=current_user.id).order_by(Tender.finish_date.asc()).all()
-                        values = return_values(tenders)
+                        values = get_tenders_to_show(sorted="finish_date")
                         return render_template("tenders.html", values=values, len=len(values),names=extract_names(values))
                     except Exception as e:
                         try:
@@ -88,28 +85,8 @@ def tenders():
                             return render_template("tenders.html", values=values, len=len(values),
                                                    names=extract_names(values))
 
-    try:
-        conn = get_my_sql_connection()
-        cursor = conn.cursor()
-        query = f"""SELECT distinct tender_id FROM aristodb.usersintasks as u
-                    inner join tasks t
-                    on u.task_id=t.task_id
-                    where user_id={current_user.id};"""
-        cursor.execute(query)
-        res = [i[0] for i in cursor.fetchall()]
-        # values = return_values(Tender.query.all())
-        my_lst = []
-        for tender in Tender.query.all():
-            if tender.tid in res:
-                my_lst.append(tender)
-        values = return_values(my_lst)
-    except Exception as e:
-        values = []
-        print("here")
-        print(e)
-        raise e
 
-
+    values = get_tenders_to_show()
 
     return render_template("tenders.html", values=values, len=len(values),names=extract_names(values))
 
