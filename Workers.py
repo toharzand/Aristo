@@ -56,6 +56,39 @@ def datetime_to_str(date):
 def str_to_datetime(string):
     return datetime.strptime(string,'%Y-%d-%m')
 
+def get_tenders_to_show(sorted=None):
+    try:
+        conn = models.get_my_sql_connection()
+        cursor = conn.cursor()
+        if sorted != None:
+            query = f"""SELECT distinct tender_id FROM aristodb.usersintasks as u
+                        inner join tasks t
+                        on u.task_id=t.task_id
+                        where user_id={current_user.id}
+                        order by {sorted};"""
+        else:
+            query = f"""SELECT distinct tender_id FROM aristodb.usersintasks as u
+                        inner join tasks t
+                        on u.task_id=t.task_id
+                        where user_id={current_user.id};"""
+
+        cursor.execute(query)
+        res = [i[0] for i in cursor.fetchall()]
+        my_lst = []
+        for tender in models.Tender.query.all():
+            if tender.tid in res:
+                my_lst.append(tender)
+        values = return_values(my_lst)
+        return values
+    except Exception as e:
+        values = []
+        print("here")
+        print(e)
+        raise e
+
+
+
+
 def return_values(tenders,filter_by=None,order_by=None):
     # if filter_by is not None:
     #     tenders = Tender.query.filter_by(tid=filter_by).first()
