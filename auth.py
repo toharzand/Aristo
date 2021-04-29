@@ -55,7 +55,7 @@ def login_post():
                                 db.session.add(user)
                                 db.session.commit()
                                 flash("אנא השלם התחברות")
-                                return redirect(url_for("login.html"))
+                                return redirect(url_for("auth.login"))
                             except Exception as e:
                                 print(e)
                                 print("problem")

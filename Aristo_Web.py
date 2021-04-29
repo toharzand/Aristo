@@ -2,16 +2,23 @@ from flask import render_template, request, redirect, session, url_for, flash,Bl
 from models import *
 import time
 from datetime import datetime
-from engine2_0 import *
+from engine2_0 import Engine
 import random
 from flask_login import login_required, current_user
-import MFTasks
+from MFTasks import *
 import Workers
 
 
+# ----------   global vars  ----------
 db = get_db()
-aristo_engine = Engine.get_instance()
+aristo_engine = None
 main = Blueprint('main', __name__)
+
+
+def define_globals():
+    global aristo_engine
+    aristo_engine = Engine.get_instance()
+
 
 
 def get_engine():
@@ -72,7 +79,8 @@ def tenders():
                 except Exception as e:
                     try:
                         req = ('finish_date',request.form['finish_date'])
-                        values = get_tenders_to_show(sorted="finish_date")
+                        print('choose finish date')
+                        values = get_tenders_to_show(sorted='department')
                         return render_template("tenders.html", values=values, len=len(values),names=extract_names(values))
                     except Exception as e:
                         try:
@@ -202,6 +210,7 @@ def newTender():
                 db.session.add(tender)
                 db.session.commit()
                 tid = Workers.get_last_tender_id()
+                print("now enter the engine")
                 aristo_engine.add_task(addNotificationTender(tid[0],"מכרז חדש נוצר",current_user.id,type="מכרז"))
                 print("job has been transfer to engine - notification in created tender ")
                 return redirect(url_for("main.tender",tender=tender.tid,contact_guy=contact_guy))
@@ -301,7 +310,10 @@ def task(tid):
                 db.session.commit()
                 print("data has been commited")
                 print("engine is on - popping notifications")
-                aristo_engine.add_task(addNotificationsChat(task_id))
+                x = aristo_engine.add_task(addNotificationsChat(task_id))
+                x.wait_for_completion()
+                print("x is - ",x.get_data_once())
+                print(450)
 
             except:
                 db.session.rollback()
@@ -340,11 +352,35 @@ def about():
     return render_template("about.html")
 
 @main.route("/notification",methods=['POST','GET'])
+@login_required
 def notification():
     if request.method == 'POST':
-        print("here")
+        print("here - notifications")
         print(request.form)
-    return render_template("notification.html")
+        try:
+            nid_to_delete = request.form['delete_notification']
+            nid_to_delete = Notification.query.filter_by(nid=nid_to_delete).first()
+            db.session.delete(nid_to_delete)
+            db.session.commit()
+            print("note has been deleted")
+        except Exception as e:
+            db.session.rollback()
+            print(e)
+    try:
+        print(current_user.id)
+        user_id = current_user.id
+        conn = get_my_sql_connection()
+        cursor = conn.cursor()
+        query = f"""select task_id,created_time,status,subject,type,n.nid from notifications n
+                    inner join notificationsintask
+                    on n.nid = notificationsintask.nid
+                    where user_id = {user_id};"""
+        cursor.execute(query)
+        data = cursor.fetchall()
+        data = get_data_notifications(data)
+    except Exception as e:
+        print(e)
+    return render_template("notification.html",data=data)
 
 @main.route("/test",methods=['POST','GET'])
 def test():

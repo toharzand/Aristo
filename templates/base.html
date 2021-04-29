@@ -83,13 +83,13 @@ body {
     <a href="{{url_for('main.newTender')}}">אשף המכרזים</a>
     <a href="{{ url_for('auth.logout') }}" class="navbar-item"> יציאה</a>
     <a href="#settings" style="float: left">&#9881;</a>
-    <a href="#notification" class="notification" style="float: left">
+    <a href="{{ url_for('main.notification') }}" class="notification" style="float: left">
   <span>
       שלום
       ,
       {{current_user.first_name}}
   </span>
-  <span class="badge">3</span>
+  <span class="badge">8</span>
     <a>{% block navbar %}{% endblock %}</a>
 </a>
       {% endif %}

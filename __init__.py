@@ -1,7 +1,8 @@
 from flask_login import LoginManager
 from models import get_db, get_app
+import engine2_0
 import Aristo_Web
-import engine
+import multiprocessing as mp
 
 
 def manage_app(app):
@@ -23,20 +24,59 @@ def manage_app(app):
 
     return app
 
+def main_process(engine_kwargs):
+    engine = engine2_0.Engine.get_instance(engine_kwargs)
+    Aristo_Web.define_globals()
+    flask_main_run()
+
+
+
+def initiate_aristo(process1, process2, engine_kwargs):
+    p3 = mp.Process(target=main_process, args=(engine_kwargs,), daemon=True)
+    process1.start()
+    process2.start()
+    p3.start()
+    process1.join()
+    process2.join()
+    p3.join()
+
 
 def flask_main_run():
     app = get_app()
     app = manage_app(app)
     db = get_db()
     db.create_all()
-    app.run(debug=True, host="0.0.0.0")
+    app.run(debug=True)
+
+def main():
+    kwargs = {}
+    manager = mp.Manager()
+    flags = manager.dict({"short": False, "long": False})
+    kwargs["flags"] = flags
+    futures = manager.dict()  # should be weak hash-map
+    kwargs["futures"] = futures  # contains - { mf task id : [response ,  condition for notify] }
+    kwargs["short_queue"] = mp.Queue()
+    kwargs["short_cond"] = mp.Condition()
+    kwargs["long_queue"] = mp.Queue()
+    kwargs["long_cond"] = mp.Condition()
+    kwargs["response_cond"] = mp.Condition()
+    kwargs["shutdown_event"] = mp.Event()
+    short_tasker = mp.Process(target=engine2_0.aristo_process_runner, daemon=True,
+                              args=("short", kwargs["short_queue"], kwargs["shutdown_event"], kwargs["short_cond"]
+                                    , flags, futures, kwargs["response_cond"]))
+    long_tasker = mp.Process(target=engine2_0.aristo_process_runner, daemon=True,
+                             args=("long", kwargs["long_queue"], kwargs["shutdown_event"], kwargs["long_cond"]
+                                   , flags, futures, kwargs["response_cond"]))
+    initiate_aristo(short_tasker, long_tasker, kwargs)
 
 
 if __name__ == '__main__':
-    engine = Aristo_Web.get_engine()
-    engine.initiate()
-    app = get_app()
-    app = manage_app(app)
-    db = get_db()
-    db.create_all()
-    app.run(debug=True, host="0.0.0.0")
+    main()
+    engine2_0.main()
+    # engine = Aristo_Web.get_engine()
+    # engine.initiate()
+    # app = get_app()
+    # app = manage_app(app)
+    # db = get_db()
+    # db.create_all()
+    # app.run(debug=True, host="0.0.0.0")

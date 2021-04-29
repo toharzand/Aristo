@@ -5,7 +5,7 @@ try:
 except Exception as e:
     print("couldn't import aristoDB")
 from datetime import datetime
-from engine2_0 import *
+# from engine2_0 import *
 
 
 class MFTask:
@@ -254,6 +254,14 @@ class addNotificationsChat(MFTask):
             print("session rolled back! - cannot enter notifications")
             print(e)
             raise e
+
+
+
+class PushNotificationsToUser(MFTask):
+    def __init__(self,user_id):
+        super().__init__()
+        self.user_id = user_id
+
 
 
 class DemoTask(MFTask):

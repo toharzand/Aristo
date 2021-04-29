@@ -3,7 +3,7 @@ from MFTasks import DailyTask, MFResponse
 import threading
 import datetime as dt
 import time
-from __init__ import flask_main_run
+# from __init__ import flask_main_run
 
 
 def get_futures():
@@ -55,6 +55,7 @@ class Engine:
         return self.response_c
 
     def add_task(self, mf_task, now=False):
+        print("add task using engine")
         args = {"q": self.long_q, "c": self.long_c, "flag": self.flags["long"]}
         if now:
             args = {"q": self.short_q, "c": self.short_c, "flag": self.flags["short"]}
@@ -124,26 +125,26 @@ def initiate_aristo(process1, process2, engine_kwargs):
     p3.join()
 
 
-def main():
-    kwargs = {}
-    manager = mp.Manager()
-    flags = manager.dict({"short": False, "long": False})
-    kwargs["flags"] = flags
-    futures = manager.dict()  # should be weak hash-map
-    kwargs["futures"] = futures  # contains - { mf task id : [response ,  condition for notify] }
-    kwargs["short_queue"] = mp.Queue()
-    kwargs["short_cond"] = mp.Condition()
-    kwargs["long_queue"] = mp.Queue()
-    kwargs["long_cond"] = mp.Condition()
-    kwargs["response_cond"] = mp.Condition()
-    kwargs["shutdown_event"] = mp.Event()
-    short_tasker = mp.Process(target=aristo_process_runner, daemon=True,
-                              args=("short", kwargs["short_queue"], kwargs["shutdown_event"], kwargs["short_cond"]
-                                    , flags, futures, kwargs["response_cond"]))
-    long_tasker = mp.Process(target=aristo_process_runner, daemon=True,
-                             args=("long", kwargs["long_queue"], kwargs["shutdown_event"], kwargs["long_cond"]
-                                   , flags, futures, kwargs["response_cond"]))
-    initiate_aristo(short_tasker, long_tasker, kwargs)
+# def main():
+#     kwargs = {}
+#     manager = mp.Manager()
+#     flags = manager.dict({"short": False, "long": False})
+#     kwargs["flags"] = flags
+#     futures = manager.dict()  # should be weak hash-map
+#     kwargs["futures"] = futures  # contains - { mf task id : [response ,  condition for notify] }
+#     kwargs["short_queue"] = mp.Queue()
+#     kwargs["short_cond"] = mp.Condition()
+#     kwargs["long_queue"] = mp.Queue()
+#     kwargs["long_cond"] = mp.Condition()
+#     kwargs["response_cond"] = mp.Condition()
+#     kwargs["shutdown_event"] = mp.Event()
+#     short_tasker = mp.Process(target=aristo_process_runner, daemon=True,
+#                               args=("short", kwargs["short_queue"], kwargs["shutdown_event"], kwargs["short_cond"]
+#                                     , flags, futures, kwargs["response_cond"]))
+#     long_tasker = mp.Process(target=aristo_process_runner, daemon=True,
+#                              args=("long", kwargs["long_queue"], kwargs["shutdown_event"], kwargs["long_cond"]
+#                                    , flags, futures, kwargs["response_cond"]))
+#     initiate_aristo(short_tasker, long_tasker, kwargs)
 
 
 if __name__ == '__main__':

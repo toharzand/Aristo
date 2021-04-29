@@ -7,18 +7,19 @@ from models import *
 import models
 from flask_login import current_user
 
+cont_users = ['צחי יעקב', 'עופר שווקי', 'יהל ישראל', 'יגאל בלפור', 'משה כהן', 'אבי סלומון', 'שחר סינואני',
+              'ליאורה קחטן', 'שרונה בן שיטרית', 'ספיר כלפון', 'סמי גריידי', 'אפרת מצליח', 'אדוה הלוי',
+              'עוזי נעים', 'נטע ראובני', 'אלי דווידי', "טלי צ'רני", 'לבנת כהן', 'מיכל שפירא',
+              'יוני קראוני', 'מיסא זועבי', 'דניאלה יפת', 'נועה רוזנפלד', 'קרן נועם', 'יהודה כהן', 'הילה שלום',
+              'לימור ניזרי', 'יהונתן קוליץ', 'מירב כהן', 'דליה בנימין', 'אבי סולומון', 'מנשה מלול', 'ירון זוהר',
+              'ליבנת כהן']
+
 
 def enter_tenders_to_db(Tenders,db,number_of_tenders_to_add):
     fake = Faker()
     tenders_committee_Type_lst = ['רכישות', 'תקשוב', 'יועצים']
     procedure_type_lst = ['מכרז פומבי', 'תיחור סגור', 'פנייה פומבית', 'RFI', 'מכרז חשכ"ל', 'הצעת מחיר']
     department_lst = ['רווחה', 'מערכות מידע', 'לוגיסטיקה', 'לשכה משפטית ']
-    cont_users = ['צחי יעקב', 'עופר שווקי', 'יהל ישראל', 'יגאל בלפור', 'משה כהן', 'אבי סלומון', 'שחר סינואני',
-                  'ליאורה קחטן', 'שרונה בן שיטרית', 'ספיר כלפון', 'סמי גריידי', 'אפרת מצליח', 'אדוה הלוי',
-                  'גורם מטעם היחידה', 'עוזי נעים', 'נטע ראובני', 'אלי דווידי', "טלי צ'רני", 'לבנת כהן', 'מיכל שפירא',
-                  'יוני קראוני', 'מיסא זועבי', 'דניאלה יפת', 'נועה רוזנפלד', 'קרן נועם', 'יהודה כהן', 'הילה שלום',
-                  'לימור ניזרי', 'יהונתן קוליץ', 'מירב כהן', 'דליה בנימין', 'אבי סולומון', 'מנשה מלול', 'ירון זוהר',
-                  'ליבנת כהן']
     subjects_lst = ['מתן שירותי הובלה וסבלות', 'עו"ד מתחום דיני העבודה', 'הדר דפנה מזנונים', 'מכרז לשדרוג תשתיות חשמל',
                     'התאמות בגין לקויות למידה', 'שיפוץ בית הדין השרעי', "אחסון מטלטלין חלק ב'", 'שירותי שמאות רכב',
                     'מכרז שמאות לציוד שנתפס', 'שמאות חפצי אומנות', 'מכירת חפצי אומנות וזהב.', 'ימי גיבוש 2020',
@@ -48,7 +49,12 @@ def enter_tenders_to_db(Tenders,db,number_of_tenders_to_add):
             continue
     return
 
-
+def get_data_notifications(data):
+    res = []
+    for item in data:
+        temp = (item[0],datetime_to_str(item[1].date()),item[2],item[3],item[4],item[5])
+        res.append(temp)
+    return res
 
 def datetime_to_str(date):
     return datetime.strftime(date,"%d/%m/%Y")
@@ -85,6 +91,7 @@ def get_tenders_to_show(sorted=None):
         print("here")
         print(e)
         raise e
+
 
 
 
@@ -147,8 +154,8 @@ def enter_fake_users_to_db(number_of_users,db,Users):
     fake = Faker()
     for i in tqdm(range(number_of_users)):
         name = fake.name().split()
-        f_name = name[0]
-        l_name = name[1]
+        f_name = random.choice(cont_users).split(" ")[0]
+        l_name = random.choice(cont_users).split(" ")[0]
         email = f"{f_name}_{l_name}@gmail.com"
         password = "".join([str(np.random.randint(0,10)) for _ in range(8)])
         user = Users(first_name=f_name,last_name=l_name,email=email,password=password)

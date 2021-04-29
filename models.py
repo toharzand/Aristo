@@ -8,10 +8,6 @@ from flask_login import UserMixin
 
 
 
-
-
-
-
 app = Flask(__name__, template_folder='templates',
             static_folder=r'C:\Users\itay dar\Desktop\projects\tender\hello_flask\git checker\aristo\templates')
 app.secret_key = "tenderly_secret_key"  # secret app for the session to keep data
@@ -350,8 +346,8 @@ class Notification(db.Model):
     type = db.Column(db.VARCHAR(50))
     created_time = db.Column(db.DateTime(255))
     # todo references
-    notification_in_tender = db.relationship('NotificationInTender', backref='Notification', lazy=True)
-    notification_in_task = db.relationship('NotificationInTask', backref='Notification', lazy=True)
+    notification_in_tender = db.relationship('NotificationInTender',cascade="all,delete", backref='Notification', lazy=True)
+    notification_in_task = db.relationship('NotificationInTask',cascade="all,delete", backref='Notification', lazy=True)
 
 
     def __init__(self,user_id,status,subject,type,created_time):
@@ -388,7 +384,6 @@ def get_app():
     return app
 
 def get_my_sql_connection():
-    import sqlite3
     try:
         connection = mysql.connector.connect(host="localhost",
                                              user="itda",
