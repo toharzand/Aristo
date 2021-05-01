@@ -48,7 +48,7 @@ class Engine:
             delta_t = td - dt.datetime.today()
             tot_sec = delta_t.total_seconds()
             time.sleep(tot_sec)
-            self.add_task(DailyTask())
+            self.add_task(DailyTask(dt.datetime.today()))
         print("daily_thread terminated")
 
     def get_response_condition(self):
@@ -58,7 +58,8 @@ class Engine:
         print("add task using engine")
         args = {"q": self.long_q, "c": self.long_c, "flag": self.flags["long"]}
         if now:
-            args = {"q": self.short_q, "c": self.short_c, "flag": self.flags["short"]}
+            if not self.long_q.empty():
+                args = {"q": self.short_q, "c": self.short_c, "flag": self.flags["short"]}
         task_id = str(id(mf_task))
         returned_response = MFResponse(task_id)
         self.futures[task_id] = returned_response
@@ -91,7 +92,10 @@ def aristo_process_runner(process_name, queue, shutdown_event, cond, flags, futu
             while not queue.empty():
                 print(f"{process_name} Q before popping: {queue.qsize()}")
                 t, task_id = queue.get()
-                data = t.process()
+                try:
+                    data = t.process()
+                except Exception as e:
+                    data = e
                 if task_id in futures.keys():  # if not responsive then we don't care for the response
                     response = futures[task_id]
                     response.set_data(data)
@@ -107,22 +111,23 @@ def aristo_process_runner(process_name, queue, shutdown_event, cond, flags, futu
 
 
 #  -----------    main process    -----------
+#    main process located in __init__ module
 
-def main_process(engine_kwargs):
-    engine = Engine.get_instance(engine_kwargs)
-    flask_main_run()
+# def main_process(engine_kwargs):
+#     engine = Engine.get_instance(engine_kwargs)
+#     flask_main_run()
 
 
 #  -----------    system initiation    -----------
 
-def initiate_aristo(process1, process2, engine_kwargs):
-    p3 = mp.Process(target=main_process, args=(engine_kwargs,), daemon=True)
-    process1.start()
-    process2.start()
-    p3.start()
-    process1.join()
-    process2.join()
-    p3.join()
+# def initiate_aristo(process1, process2, engine_kwargs):
+#     p3 = mp.Process(target=main_process, args=(engine_kwargs,), daemon=True)
+#     process1.start()
+#     process2.start()
+#     p3.start()
+#     process1.join()
+#     process2.join()
+#     p3.join()
 
 
 # def main():
@@ -148,7 +153,8 @@ def initiate_aristo(process1, process2, engine_kwargs):
 
 
 if __name__ == '__main__':
-    main()
+    pass
+    # main()
     # kwargs = {}
     # manager = mp.Manager()
     # flags = manager.dict({"short": False, "long": False})

@@ -5,7 +5,7 @@ try:
 except Exception as e:
     print("couldn't import aristoDB")
 from datetime import datetime
-# from engine2_0 import *
+from engine2_0 import *
 
 
 class MFTask:
@@ -17,22 +17,6 @@ class MFTask:
         pass
 
 
-# class MFResponse:    old
-#     def __init__(self):
-#         self.__data = None
-#         self.__complete = False
-#
-#     def get_data(self):
-#         return self.__data
-#
-#     def is_complete(self) -> bool:
-#         return self.__complete
-#
-#     def set_data(self, data):
-#         self.__data = data
-#
-#     def complete(self):
-#         self.__complete = True
 class MFResponse:
     def __init__(self, task_id):
         self.data = None
@@ -297,8 +281,30 @@ class HeartBeat(MFTask):
 
 
 class DailyTask(MFTask):
+    def __init__(self, time_stamp):
+        self.all_users_messages = {}
+        self.time_stamp = time_stamp
+
     def process(self, engine=None):
         print(f"{self} processing")
+        self.send_all_managers_daily_report()
+
+
+    def send_all_managers_daily_report(self):
+        pass
+    # for manager in all tenders do:
+    #       for each tender this one managing:
+    #           data_string = f"{tender.name, protocol number, subject} you managing:\n"
+    #           dict_counters : {
+    #               task_changed_status : 0,
+    #               on_going_tasks: {task_name: task status calculated from its deadline},
+    #               total_inside_task_activity:{task_name: task activity}
+    #           }
+    #           for each task in a tender:
+    #               for each log in TaskLog where self.time_stamp-24 <= log.init_time < self.time_stamp:
+    #                   u_a_sa_t = log.split(" ")  # user, action, second action, target
+    #                   if a == "changed":
+    #
 
     def __repr__(self):
         return "DailyTask"

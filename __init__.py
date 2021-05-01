@@ -24,12 +24,25 @@ def manage_app(app):
 
     return app
 
+
+#  -----------    main process    -----------
+
 def main_process(engine_kwargs):
     engine = engine2_0.Engine.get_instance(engine_kwargs)
+    engine.initiate()
     Aristo_Web.define_globals()
-    flask_main_run()
+    # flask_main_run()
 
 
+def flask_main_run():
+    app = get_app()
+    app = manage_app(app)
+    db = get_db()
+    db.create_all()
+    app.run(debug=True)
+
+
+#  -----------    system initiation    -----------
 
 def initiate_aristo(process1, process2, engine_kwargs):
     p3 = mp.Process(target=main_process, args=(engine_kwargs,), daemon=True)
@@ -41,20 +54,14 @@ def initiate_aristo(process1, process2, engine_kwargs):
     p3.join()
 
 
-def flask_main_run():
-    app = get_app()
-    app = manage_app(app)
-    db = get_db()
-    db.create_all()
-    app.run(debug=True)
-
 def main():
+    #  define all processes and between-processes shared data arguments:
     kwargs = {}
     manager = mp.Manager()
     flags = manager.dict({"short": False, "long": False})
     kwargs["flags"] = flags
     futures = manager.dict()  # should be weak hash-map
-    kwargs["futures"] = futures  # contains - { mf task id : [response ,  condition for notify] }
+    kwargs["futures"] = futures
     kwargs["short_queue"] = mp.Queue()
     kwargs["short_cond"] = mp.Condition()
     kwargs["long_queue"] = mp.Queue()
@@ -72,7 +79,6 @@ def main():
 
 if __name__ == '__main__':
     main()
-    engine2_0.main()
     # engine = Aristo_Web.get_engine()
     # engine.initiate()
     # app = get_app()
