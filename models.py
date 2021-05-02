@@ -155,8 +155,8 @@ class TaskLog(db.Model):
     description = needed to be set and interpreted:
         user_id added u user_id = "נעה לוי הוסיפה את אבי כהן"
         user_id added f file_id = "נעה לוה הוסיפה קובץ למשימה"
-        user_id eddited description = "נעה לוי שינתה את תיאור המשימה"
-        user_id eddited status = "נעה לוי שינתה את סטטוס המשימה"
+        user_id edited description = "נעה לוי ערכה את תיאור המשימה"
+        user_id changed status = "נעה לוי שינתה את סטטוס המשימה"
         ....
     """
     __tablename__ = "TasksLogs"
