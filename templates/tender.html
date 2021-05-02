@@ -158,6 +158,26 @@ background-color: #C0C0C0;
 </form>
 
 <form action="#" method="post" dir="rtl">
+
+    <div class="div div1" style="background-color: #b30c1d;">
+        <p style="font-size:28px; color:white">משימות ממתינות</p>
+        {% for task in block_tasks %}
+      <div class="div div2" style="background-color: #b30c1d; color:white">
+        <p style="float:right; display: inline-block;margin-right:5px; ">{{task.subject[:15]}}</p>
+        <p style="float:center; display: inline-block;">{{task.deadline.date()}}</p>
+        <p style="float:left; margin-left:5px; display: inline-block;">{{get_user_name(task.task_owner_id).first_name}} {{get_user_name(task.task_owner_id).last_name}}</p>
+        <p>&nbsp;<p/>
+        <button type="submit" name="view_task" id="view_task" value="{{task.task_id}}" dir="rtl" class="button button1" style="float:right;">צפה במשימה</button>
+        <select dir="rtl" name="status" id="status" onchange="this.form.submit()">
+          <option value="" disabled selected>שנה סטטוס</option>
+          <option value="{{[1,task.task_id]}}">&#128309;</option>
+          <option value="{{[2,task.task_id]}}">&#128993;</option>
+          <option value="{{[4,task.task_id]}}">&#128994;</option>
+        </select>
+      </div>
+    {% endfor %}
+  </div>
+
   <div class="div div1" style="background-color: #6495ED; margin-right:50px;">
         <p style="font-size:28px;">משימות פתוחות</p>
     {% for task in open_tasks %}
@@ -199,28 +219,6 @@ background-color: #C0C0C0;
     {% endfor %}
 
   </div>
-
-
-
-  <div class="div div1" style="background-color: #b30c1d;">
-        <p style="font-size:28px; color:white">משימות ממתינות</p>
-        {% for task in block_tasks %}
-      <div class="div div2" style="background-color: #b30c1d; color:white">
-        <p style="float:right; display: inline-block;margin-right:5px; ">{{task.subject[:15]}}</p>
-        <p style="float:center; display: inline-block;">{{task.deadline.date()}}</p>
-        <p style="float:left; margin-left:5px; display: inline-block;">{{get_user_name(task.task_owner_id).first_name}} {{get_user_name(task.task_owner_id).last_name}}</p>
-        <p>&nbsp;<p/>
-        <button type="submit" name="view_task" id="view_task" value="{{task.task_id}}" dir="rtl" class="button button1" style="float:right;">צפה במשימה</button>
-        <select dir="rtl" name="status" id="status" onchange="this.form.submit()">
-          <option value="" disabled selected>שנה סטטוס</option>
-          <option value="{{[1,task.task_id]}}">&#128309;</option>
-          <option value="{{[2,task.task_id]}}">&#128993;</option>
-          <option value="{{[4,task.task_id]}}">&#128994;</option>
-        </select>
-      </div>
-    {% endfor %}
-  </div>
-
 
 
 

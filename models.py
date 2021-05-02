@@ -298,9 +298,9 @@ class TaskTemplate(db.Model):
 
     __tablename__ = "TasksTemplate"
     task_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    status = db.Column(db.VARCHAR(50))
-    subject = db.Column(db.VARCHAR(50))
-    description = db.Column(db.VARCHAR(120))
+    status = db.Column(db.VARCHAR(15))
+    subject = db.Column(db.VARCHAR(100))
+    description = db.Column(db.VARCHAR(500))
     time_delta = db.Column(db.Integer)
     # todo references
     # task_1 = db.relationship('TaskDependenciesTemplate',backref='TasksTemplate',lazy=True)
@@ -421,6 +421,10 @@ if __name__ == '__main__':
     db.drop_all()
     db.create_all()
     fill_db(30,db,User,Tender,Task,TaskLog,TaskNote,UserInTask)
+    insert_tender_templates()
+    insert_task_templates()
+    insert_task_dependencies()
+
 
     # enter_fake_users_to_db(30,db,User)
     # enter_tenders_to_db(Tender,db,5)
