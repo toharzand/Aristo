@@ -48,7 +48,7 @@ class Engine:
             delta_t = td - dt.datetime.today()
             tot_sec = delta_t.total_seconds()
             time.sleep(tot_sec)
-            self.add_task(DailyTask(dt.datetime.today()))
+            self.add_task(DailyTask())
         print("daily_thread terminated")
 
     def get_response_condition(self):

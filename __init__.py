@@ -31,7 +31,7 @@ def main_process(engine_kwargs):
     engine = engine2_0.Engine.get_instance(engine_kwargs)
     engine.initiate()
     Aristo_Web.define_globals()
-    # flask_main_run()
+    flask_main_run()
 
 
 def flask_main_run():

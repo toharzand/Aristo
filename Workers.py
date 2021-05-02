@@ -70,8 +70,10 @@ def get_tenders_to_show(sorted=None):
             query = f"""SELECT distinct tender_id FROM aristodb.usersintasks as u
                         inner join tasks t
                         on u.task_id=t.task_id
-                        where user_id={current_user.id}
-                        order by {sorted};"""
+                        inner join tenders tn
+                        on t.tender_id = tn.tid
+                        where u.user_id={current_user.id}
+                        order by tn.{sorted} desc;"""
         else:
             query = f"""SELECT distinct tender_id FROM aristodb.usersintasks as u
                         inner join tasks t
@@ -81,10 +83,12 @@ def get_tenders_to_show(sorted=None):
         cursor.execute(query)
         res = [i[0] for i in cursor.fetchall()]
         my_lst = []
-        for tender in models.Tender.query.all():
-            if tender.tid in res:
-                my_lst.append(tender)
+
+        for tender_id in res:
+            my_lst.append(models.Tender.query.filter_by(tid=tender_id).first())
         values = return_values(my_lst)
+        for val in values:
+            print(val)
         return values
     except Exception as e:
         values = []

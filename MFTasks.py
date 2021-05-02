@@ -5,7 +5,7 @@ try:
 except Exception as e:
     print("couldn't import aristoDB")
 from datetime import datetime
-# from engine2_0 import *
+from engine2_0 import *
 
 
 class MFTask:
@@ -15,7 +15,6 @@ class MFTask:
     def process(self, engine=None):
         print(f"process of {self} wasn't yet overridden")
         pass
-
 
 class MFResponse:
     def __init__(self, task_id):
@@ -240,6 +239,80 @@ class addNotificationsChat(MFTask):
             raise e
 
 
+class UpdateTaskStatus(MFTask):
+    def __init__(self,task_id,user_id,status):
+        super().__init__()
+        self.task_id = task_id
+        self.user = User.query.filter_by(id=user_id).first()
+        self.status = status
+        self.init_time = datetime.now()
+
+    def process(self, engine=None):
+        try:
+            print("start procerss")
+            name = f"{self.user.first_name} {self.user.last_name}"
+            description = f"{name} שינה את סטטוס המשימה" + " " + f"ל-{self.status}"
+            print(description)
+            changeStatusLog = TaskLog(self.user.id,self.task_id,self.init_time,description)
+            db.session.add(changeStatusLog)
+            db.session.commit()
+            print("status changed - log commited")
+        except Exception as e:
+            db.session.rollback()
+            print("there was problem with logging the status change")
+            print(e)
+
+
+class LogNewTask(MFTask):
+    def __init__(self,user_id):
+        super().__init__()
+        self.user = User.query.filter_by(id=user_id).first()
+        self.init_time = datetime.now()
+
+    def process(self, engine=None):
+        print("start add new task procerss")
+        name = f"{self.user.first_name} {self.user.last_name}"
+        description =  f"{name} הוסיף משימה חדשה " + " " + f"{self.init_time.hour}:{self.init_time.minute} {self.init_time.date()} "
+        print(description)
+        try:
+            conn = get_my_sql_connection()
+            cursor = conn.cursor()
+            query = f"""select task_id from tasks
+                        order by task_id desc
+                        limit 1;"""
+            cursor.execute(query)
+            task_id = cursor.fetchone()[0]
+            print(task_id)
+        except Exception as e:
+            print(f"not able to fetch because: {e}")
+        createTaskLog = TaskLog(self.user.id,task_id,self.init_time,description)
+        try:
+            db.session.add(createTaskLog)
+            db.session.commit()
+            print("task registered - log commited")
+        except Exception as e:
+            db.session.rollback()
+            print("there was problem with logging the task registered")
+            raise e
+
+class AddVisitorNote(MFTask):
+    """docstring for AddVisitorNote"""
+    def __init__(self, name,email,msg):
+        super().__init__()
+        self.name = name
+        self.email = email
+        self.msg = msg
+        self.time_created = datetime.now()
+
+    def process(self,engine=None):
+        visitor_note = ContactNote(self.email,self.name,self.msg,self.time_created)
+        try:
+            db.session.add(visitor_note)
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            print(e)
+        
 
 class PushNotificationsToUser(MFTask):
     def __init__(self,user_id):

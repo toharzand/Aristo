@@ -85,23 +85,24 @@ def tenders():
                 print("here you need to sort/filter")
                 try:
                     req = ('subject',request.form['subject'])
-                    print("choose by subject")
+                    print(req)
                     values = get_tenders_to_show(sorted='subject')
+                    print("values = ",values)
                     return render_template("tenders.html",values=values,len=len(values),names=extract_names(values))
                 except Exception as e:
                     try:
                         req = ('finish_date',request.form['finish_date'])
+                        print(req)
                         print('choose finish date')
-                        values = get_tenders_to_show(sorted='department')
+                        values = get_tenders_to_show(sorted='finish_date')
                         return render_template("tenders.html", values=values, len=len(values),names=extract_names(values))
                     except Exception as e:
                         try:
                             req = ('department',request.form['department'])
-                            tenders = Tender.query.filter_by(id=current_user.id).order_by(Tender.department.desc()).all()
-                            values = return_values(tenders)
+                            values = get_tenders_to_show(sorted='department')
                             return render_template("tenders.html", values=values, len=len(values),names=extract_names(values))
                         except:
-                            values = return_values(Tender.query.all())
+                            values = get_tenders_to_show()
                             return render_template("tenders.html", values=values, len=len(values),
                                                    names=extract_names(values))
 
