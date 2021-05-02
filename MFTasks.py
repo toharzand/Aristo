@@ -20,7 +20,9 @@ class MFResponse:
     def __init__(self, task_id):
         self.data = None
         self.is_complete_att = False
+        self.error = False
         self.__creator_id = task_id
+
 
     def get_data_once(self):
         if self.__creator_id in get_futures().keys():
@@ -35,6 +37,8 @@ class MFResponse:
         return self.is_complete_att
 
     def set_data(self, data):
+        if isinstance(data, Exception):
+            self.error = True
         self.data = data
 
     def complete(self):
@@ -51,10 +55,12 @@ class MFResponse:
         if self.is_complete():
             return self.data
 
+    def error_occurred(self):
+        return not self.error
+
 
     def __repr__(self):
         return "response of task - " + self.__creator_id
-        self.done = True
 
 
 class DeleteTenderDependencies(MFTask):
