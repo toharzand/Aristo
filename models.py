@@ -377,6 +377,25 @@ class NotificationInTask(db.Model):
         self.task_id = task_id
 
 
+class ContactNote(db.Model):
+    __tablename__ = "ContactNotes"
+    note_id = db.Column(db.Integer, primary_key=True,autoincrement=True)
+    email = db.Column(db.String(100), nullable=False)
+    name = db.Column(db.String(100))
+    msg = db.Column(db.String(500), nullable=False)
+    date_created = db.Column(db.DateTime(255), nullable=False)
+
+    def __init__(self,email,name,msg,date_created):
+        self.email = email
+        self.name = name
+        self.msg = msg
+        self.date_created = date_created
+
+
+
+
+
+
 def get_db():
     return db
 

@@ -25,9 +25,21 @@ def get_engine():
     return aristo_engine
 
 
-@main.route("/")
-@main.route("/home")
+@main.route("/",methods=["POST", "GET"])
+@main.route("/home",methods=["POST", "GET"])
 def home():
+    print("in home")
+    if request.method == "POST":
+        session.permanent = True
+        print("trying to leave meassage")
+        try:
+            name = request.form['Name']
+            email = request.form['Email']
+            msg = request.form['Message']
+            aristo_engine.add_task(AddVisitorNote(name,email,msg))
+            return render_template("home.html")
+        except Exception as e:
+            print("could not handle visitor msg")
     return render_template("home.html")
 
 
@@ -151,6 +163,7 @@ def tender(tender):
                     current_task = Task.query.filter_by(task_id=task_id).first()
                     current_task.status = status
                     db.session.commit()
+                    aristo_engine.add_task(UpdateTaskStatus(task_id,current_user.id,status))
                     print("change the status of the task")
                     return redirect(url_for("main.tender",tender=tender))
 
@@ -251,6 +264,9 @@ def newTask(tid):
             try:
                 db.session.add(task)
                 db.session.commit()
+                print(f"task added succusfully by user number: {current_user.id}")
+                aristo_engine.add_task(LogNewTask(current_user.id))
+                time.sleep(0.2)
             except Exception as e:
                 print(e)
                 db.session.rollback()
@@ -267,18 +283,6 @@ def newTask(tid):
                 db.session.add(user_in_current_task)
                 db.session.commit()
                 aristo_engine.add_task(addNotificationTask(task=task_id,subject="משימה נוספה בהצלחה",user_id=current_user.id,type="משימה"))
-                # print(task_id)
-                # task = Task.query.filter_by(task_id=task_id).first()
-                # task_logs = TaskLog.query.filter_by(task_id=task_id).all()
-                # notes = TaskNote.query.filter_by(task_id=task_id).order_by("time").all()
-                # names = []
-                # for note in notes:
-                #     names.append(turn_id_to_name(note.user_id))
-                # print("here")
-                # print(task.subject)
-                # print(task_logs)
-                # print(notes)
-                # print(names)
                 return redirect(url_for("main.task",tid=task_id))
             except Exception as e:
                 print(e)
