@@ -5,7 +5,7 @@ try:
 except Exception as e:
     print("couldn't import aristoDB")
 from datetime import datetime
-from engine2_0 import *
+import engine2_0
 
 
 class MFTask:
@@ -16,6 +16,7 @@ class MFTask:
         print(f"process of {self} wasn't yet overridden")
         pass
 
+
 class MFResponse:
     def __init__(self, task_id):
         self.data = None
@@ -25,13 +26,13 @@ class MFResponse:
 
 
     def get_data_once(self):
-        if self.__creator_id in get_futures().keys():
-            get_futures().pop(self.__creator_id)
+        if self.__creator_id in engine2_0.get_futures().keys():
+            engine2_0.get_futures().pop(self.__creator_id)
         return self.data
 
     def is_complete(self) -> bool:
-        if get_futures()[self.__creator_id] is not self:
-            me = get_futures()[self.__creator_id]
+        if engine2_0.get_futures()[self.__creator_id] is not self:
+            me = engine2_0.get_futures()[self.__creator_id]
             self.data = me.data
             self.is_complete_att = me.is_complete_att
         return self.is_complete_att
@@ -46,7 +47,7 @@ class MFResponse:
 
     def wait_for_completion(self):
         while True:  # replace with engine termination condition
-            cond = Engine.get_instance().get_response_condition()
+            cond = engine2_0.Engine.get_instance().get_response_condition()
             with cond:
                 if not self.is_complete():
                     cond.wait()
@@ -324,7 +325,6 @@ class PushNotificationsToUser(MFTask):
     def __init__(self,user_id):
         super().__init__()
         self.user_id = user_id
-
 
 
 class DemoTask(MFTask):

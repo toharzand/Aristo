@@ -39,7 +39,7 @@ def flask_main_run():
     app = manage_app(app)
     db = get_db()
     db.create_all()
-    app.run(debug=True)
+    app.run(debug=True,host="0.0.0.0")
 
 
 #  -----------    system initiation    -----------

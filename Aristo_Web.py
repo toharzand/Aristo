@@ -266,8 +266,9 @@ def newTask(tid):
                 db.session.add(task)
                 db.session.commit()
                 print(f"task added succusfully by user number: {current_user.id}")
-                aristo_engine.add_task(LogNewTask(current_user.id))
-                time.sleep(0.2)
+                x = aristo_engine.add_task(LogNewTask(current_user.id))
+                x.wait_for_completion()
+                print("this is x.is_complete - ",x.is_complete_att)
             except Exception as e:
                 print(e)
                 db.session.rollback()

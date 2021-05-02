@@ -378,6 +378,7 @@ def get_last_tender_id():
 def function_for_sorting(request,Tender,db):
     pass
 
-
-if __name__ == '__main__':
-    fill_db(30,db,User,Tender,Task,TaskLog,TaskNote,UserInTask)
+def insertTemplates():
+    procedure_type_lst = ['מכרז פומבי', 'תיחור סגור', 'פנייה פומבית', 'RFI', 'מכרז חשכ"ל', 'הצעת מחיר']
+    department_lst = ['רווחה', 'מערכות מידע', 'לוגיסטיקה', 'לשכה משפטית ']
+    return None
