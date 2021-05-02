@@ -161,10 +161,11 @@ def tender(tender):
                         status = "הושלם"
                     else:
                         status = "Null"
-                    current_task = Task.query.filter_by(task_id=task_id).first()
-                    current_task.status = status
-                    db.session.commit()
-                    aristo_engine.add_task(UpdateTaskStatus(task_id,current_user.id,status))
+                    # current_task = Task.query.filter_by(task_id=task_id).first()
+                    # current_task.status = status
+                    # db.session.commit()
+                    res = aristo_engine.add_task(UpdateTaskStatus(task_id,current_user.id,status))
+                    res.wait_for_completion()
                     print("change the status of the task")
                     return redirect(url_for("main.tender",tender=tender))
 
