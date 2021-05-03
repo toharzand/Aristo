@@ -305,7 +305,11 @@ class UpdateTaskStatus(MFTask):
             description = f"{name} שינה את סטטוס המשימה" + " " + f"ל-{self.status}"
             print(description)
             if self.status == "הושלם":
-                self.update_dependencies()
+                try:
+                    self.update_dependencies()
+                except Exception as e:
+                    print(e)
+                    pass
             changeStatusLog = TaskLog(self.user.id,self.task_id,self.init_time,description)
             db.session.add(changeStatusLog)
             db.session.commit()

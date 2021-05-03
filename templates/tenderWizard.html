@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% block title %}tender{% endblock %}
+
+{% block content %}
+
+
+
+<style>
+
+input[type=date] {
+  width: 20%;
+  padding: 12px 20px;
+  margin: 8px 0;
+  display: inline-block;
+  border: 3px solid #ccc;
+  border-radius: 50px;
+  box-sizing: border-box;
+}
+
+input[type=email] {
+  width: 20%;
+  padding: 12px 20px;
+  margin: 8px 0;
+  display: inline-block;
+  border: 3px solid #ccc;
+  border-radius: 50px;
+  box-sizing: border-box;
+}
+input[type=text] {
+  width: 20%;
+  padding: 12px 20px;
+  margin: 8px 0;
+  display: inline-block;
+  border: 3px solid #ccc;
+  border-radius: 50px;
+  box-sizing: border-box;
+}
+input[type=password] {
+  width: 20%;
+  padding: 12px 20px;
+  margin: 8px 0;
+  display: inline-block;
+  border: 3px solid #ccc;
+  border-radius: 50px;
+  box-sizing: border-box;
+}
+
+input[type=submit] {
+  width: 25%;
+  background-color: #4CAF50;
+  color: white;
+  padding: 14px 20px;
+  margin: 8px 0;
+  border: none;
+  border-radius: 30px;
+  cursor: pointer;
+   font-size: 16px;
+
+}
+
+input[type=submit]:hover {
+  background-color: #45a049;
+}
+
+div {
+  background-color: #f2f2f2;
+  padding: 0px;
+
+}
+
+.button {
+  border: none;
+  color: white;
+  padding: 15px 32px;
+  text-align: center;
+  text-decoration: none;
+  display: block;
+  font-size: 16px;
+  margin: auto;
+  cursor: pointer;
+  border-radius: 50px
+}
+
+.button1 {background-color: #4CAF50;} /* Green */
+
+</style>
+  <form action="#" method="post">
+      <div align="center" style="padding:10px">
+        <h1 style="background-color: #f2f2f2;">🧙 ברוכים הבאים לאשף המכרזים  </h1>
+          <h3 style="background-color: #f2f2f2;">הזינו את פרטי המכרז</h3>
+    <input type="text" id="tenders_committee_Type" name="tenders_committee_Type" placeholder="ועדת מכרזים" dir="rtl">
+    </div>
+<div align="center">
+    <input type="text" id="department" name="department" placeholder="יחידה מקצועית" dir="rtl">
+</div>
+</div>
+<div align="center">
+    <input type="text" id="procedure_type" name="procedure_type" placeholder="סוג ההליך" dir="rtl">
+</div>
+<div align="center">
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            {% for msg in messages %}
+                <p align="center" style="font-size:16">{{msg}}</p>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+</div>
+
+<div align="center" dir="rtl">
+      <input type="submit" value="צור מכרז" align="center">
+</div>
+  </form>
+
+<div style="margin-bottom:10px;">
+<form action="/action_page.php">
+      <button type="submit" formaction="\home" dir="rtl" class="button button1">חזרה לעמוד הבית</button>
+</form>
+</div>
+{% endblock %}

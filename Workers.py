@@ -15,6 +15,15 @@ cont_users = ['צחי יעקב', 'עופר שווקי', 'יהל ישראל', 'י
               'ליבנת כהן']
 
 
+def extract_names(values):
+    names = []
+    for val in values:
+        u_id = val[5]
+        user_name = User.query.filter_by(id=u_id).first()
+        user_name = f"{user_name.first_name} {user_name.last_name}"
+        names.append(user_name)
+    return names
+
 def enter_tenders_to_db(Tenders,db,number_of_tenders_to_add):
     fake = Faker()
     tenders_committee_Type_lst = ['רכישות', 'תקשוב', 'יועצים']
@@ -389,6 +398,7 @@ def insertTemplates():
                     db.session.add(TenderTemplate(i,j,k))
                     db.session.commit()
                 except Exception as e:
+                    print(e)
                     db.session.rollback()
 
 
@@ -462,8 +472,10 @@ def insert_task_templates():
 
 
 def insert_task_dependencies():
+    print("here")
     tasks = TaskTemplate.query.all()
     tasks = [t.task_id for t in tasks]
+    print(tasks)
     dict_dependencies = {tasks[0] : [tasks[1]],
                          tasks[1] : [tasks[2],tasks[3],tasks[5]],
                          tasks[3] : [tasks[4],tasks[6]],
@@ -492,20 +504,21 @@ def insert_task_dependencies():
     for tender in TenderTemplate.query.all():
         tid = tender.tid
         for key in dict_dependencies:
-            for task in dict_dependencies:
+            for task in dict_dependencies[key]:
                 if task == key:
                     continue
                 depend = TaskDependenciesTemplate(key,task,tid)
+                print(key,task,tid)
                 try:
                     db.session.add(depend)
                     db.session.commit()
-                except:
+                    print("commited")
+                except Exception as e:
                     db.session.rollback()
+                    print(e)
 
 
 
 
 if __name__ == '__main__':
-    insertTemplates()
-    insert_task_templates()
     insert_task_dependencies()

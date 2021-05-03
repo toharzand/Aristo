@@ -423,7 +423,6 @@ if __name__ == '__main__':
     fill_db(30,db,User,Tender,Task,TaskLog,TaskNote,UserInTask)
     insert_tender_templates()
     insert_task_templates()
-    insert_task_dependencies()
 
 
     # enter_fake_users_to_db(30,db,User)

@@ -48,19 +48,33 @@ def home():
 def user():
     return render_template("user.html")
 
+@main.route("/tenderWizard",methods = ["POST","GET"])
+@login_required
+def tender_wizard():
+    if request.method == "POST":
+        print("Welcome to the Wizard")
+        try:
+            com_type = request.form["tenders_committee_Type"]
+            dep = request.form["department"]
+            proc_type = request.form["procedure_type"]
+            print(com_type,dep,proc_type)
+            print("prepare for query, this is id: ")
+            tid_template = TenderTemplate.query.filter_by(tenders_committee_Type=com_type,procedure_type=proc_type,department=dep).first()
+            if tid_template:
+                print("good")
+            res = aristo_engine.add_task(CreateTenderFromTemplate(tid_template))
+            res.wait_for_completion()
+            values = get_tenders_to_show()
+            names = extract_names(values)
+        except Exeption as e:
+            print("error " + e)
+
+    return render_template("tenderWizard.html")
+
 
 @main.route("/tenders", methods=["POST", "GET"])
 @login_required
 def tenders():
-    def extract_names(values):
-        names = []
-        for val in values:
-            u_id = val[5]
-            user_name = User.query.filter_by(id=u_id).first()
-            user_name = f"{user_name.first_name} {user_name.last_name}"
-            names.append(user_name)
-        return names
-
     print("all tender page")
     if request.method == "POST":
         session.permanent = True

@@ -80,8 +80,8 @@ body {
 
     {% if current_user.is_authenticated %}
     <a href="{{url_for('main.tenders')}}">המכרזים שלי</a>
-    <a href="{{url_for('main.newTender')}}">אשף המכרזים</a>
-    <a href="{{ url_for('auth.logout') }}" class="navbar-item"> יציאה</a>
+    <a href="{{url_for('main.tender_wizard')}}">אשף המכרזים</a>
+    <a href="{{ url_for('auth.logout') }}" class="navbar-item">יציאה</a>
     <a href="#settings" style="float: left">&#9881;</a>
     <a href="{{ url_for('main.notification') }}" class="notification" style="float: left">
   <span>
