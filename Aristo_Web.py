@@ -66,7 +66,7 @@ def tender_wizard():
             res.wait_for_completion()
             values = get_tenders_to_show()
             names = extract_names(values)
-        except Exeption as e:
+        except Exception as e:
             print("error " + e)
 
     return render_template("tenderWizard.html")

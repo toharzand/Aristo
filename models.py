@@ -313,21 +313,21 @@ class TaskTemplate(db.Model):
 
 class TaskDependenciesTemplate(db.Model):
     """
-    dependent - the task that's blocking the second task
+    depender - the task that's blocking the second task
     dependee - the task that depend on another task
     tender_id - the tender_template that contain the tasks
     """
     __tablename__ = "TasksDependenciesTemplate"
-    dependent_id = db.Column(db.Integer,db.ForeignKey('TasksTemplate.task_id'), primary_key=True,nullable=False)
-    dependent = db.relationship("TaskTemplate", foreign_keys="TaskDependenciesTemplate.dependent_id")
+    depender_id = db.Column(db.Integer,db.ForeignKey('TasksTemplate.task_id'), primary_key=True,nullable=True)
+    depender = db.relationship("TaskTemplate", foreign_keys="TaskDependenciesTemplate.depender_id")
 
-    dependee_id = db.Column(db.Integer,db.ForeignKey('TasksTemplate.task_id'), primary_key=True,nullable=False)
+    dependee_id = db.Column(db.Integer,db.ForeignKey('TasksTemplate.task_id'), primary_key=True,nullable=True)
     dependee = db.relationship("TaskTemplate", foreign_keys="TaskDependenciesTemplate.dependee_id")
 
     tender_id = db.Column(db.Integer,db.ForeignKey('TendersTemplate.tid'), primary_key=True,nullable=False)
 
-    def __init__(self, dependent, dependee, tender_id):
-        self.dependent = dependent
+    def __init__(self, depender, dependee, tender_id):
+        self.depender = depender
         self.dependee = dependee
         self.validate()
         self.tender_id = tender_id
