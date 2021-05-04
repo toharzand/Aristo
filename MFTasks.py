@@ -264,7 +264,7 @@ class UpdateTaskStatus(MFTask):
         self.task_id = task_id
         self.user = User.query.filter_by(id=user_id).first()
         self.status = status
-        self.init_time = datetime.now()
+        self.init_time = datetime.datetime.now()
 
     def should_advance(self, blocked_id):
         #  check if task should advance from 'blocked' to 'open' by checking if all it blockers are done
@@ -307,7 +307,8 @@ class UpdateTaskStatus(MFTask):
             print(description)
             if self.status == "הושלם":
                 try:
-                    self.update_dependencies()
+                    # self.update_dependencies()
+                    pass
                 except Exception as e:
                     print(e)
                     pass
@@ -505,9 +506,9 @@ class AddUserTask(MFTask):
 
 
 class CreateTenderFromTemplate(MFTask):
-    def __init__(self, template_id, contact_user, subject, opening_date=datetime.now()):
+    def __init__(self, template_id, contact_user, subject):
         self.template_id = template_id
-        self.opening_date = opening_date
+        self.opening_date = datetime.now()
         self.contact_user = contact_user
         self.subject = subject
         self.con = get_my_sql_connection().cursor()
