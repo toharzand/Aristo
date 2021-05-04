@@ -19,7 +19,7 @@ def extract_names(values):
     names = []
     for val in values:
         u_id = val[5]
-        user_name = User.query.filter_by(id=u_id).first()
+        user_name = models.User.query.filter_by(id=u_id).first()
         user_name = f"{user_name.first_name} {user_name.last_name}"
         names.append(user_name)
     return names

@@ -90,9 +90,10 @@ def aristo_process_runner(process_name, queue, shutdown_event, cond, flags, futu
         with cond:
             print(f"{process_name} process condition acquired")
             while not queue.empty():
-                print(f"{process_name} Q before popping: {queue.qsize()}")
+                # print(f"{process_name} Q before popping: {queue.qsize()}")
                 t, task_id = queue.get()
                 try:
+                    print(f"processing task - {type(t).__name__}")
                     data = t.process()
                 except Exception as e:
                     data = e

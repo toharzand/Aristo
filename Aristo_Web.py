@@ -62,7 +62,7 @@ def tender_wizard():
             tid_template = TenderTemplate.query.filter_by(tenders_committee_Type=com_type,procedure_type=proc_type,department=dep).first()
             if tid_template:
                 print("good")
-            res = aristo_engine.add_task(CreateTenderFromTemplate(tid_template))
+            res = aristo_engine.add_task(CreateTenderFromTemplate(tid_template.tid))
             res.wait_for_completion()
             values = get_tenders_to_show()
             names = extract_names(values)
