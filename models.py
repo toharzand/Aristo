@@ -302,11 +302,6 @@ class TaskTemplate(db.Model):
     subject = db.Column(db.VARCHAR(100))
     description = db.Column(db.VARCHAR(500))
     time_delta = db.Column(db.Integer)
-    # todo references
-    # depender = db.relationship("TaskDependenciesTemplate",backref="TasksTemplate",lazy=True)
-    # dependee = db.relationship("TaskDependenciesTemplate",backref="TasksTemplate",lazy=True)
-
-    # task_1 = db.relationship('TaskDependenciesTemplate',backref='TasksTemplate',lazy=True)
 
     def __init__(self, status, subject, description, time_delta):
         self.status = status
@@ -323,10 +318,11 @@ class TaskDependenciesTemplate(db.Model):
     __tablename__ = "TasksDependenciesTemplate"
     depender_id = db.Column(db.Integer,db.ForeignKey('TasksTemplate.task_id'), primary_key=True,nullable=True)
     dependee_id = db.Column(db.Integer,db.ForeignKey('TasksTemplate.task_id'), primary_key=True,nullable=True)
-
-    depender = db.relationship("TasksDependenciesTemplate", backref="user", uselist=False, foreign_keys=[person_user_id])
-
     tender_id = db.Column(db.Integer,db.ForeignKey('TendersTemplate.tid'), primary_key=True,nullable=False)
+
+    depender = db.relationship("TaskTemplate",foreign_keys=[depender_id],lazy=True)
+    dependee = db.relationship("TaskTemplate",foreign_keys=[dependee_id],lazy=True)
+
 
     def __init__(self, depender, dependee, tender_id):
         self.depender = depender
@@ -395,7 +391,21 @@ class ContactNote(db.Model):
 
 
 
+class user(db.Model):
+    __tablename__ = "user"
+    id = db.Column(db.Integer,autoincrement=True,nullable=False,unique=True,primary_key=True)
 
+
+class depends(db.Model):
+    __tablename__ = "depends"
+    user_one_id = db.Column(db.Integer,db.ForeignKey('user.id'),primary_key=True)
+    user_two_id = db.Column(db.Integer,db.ForeignKey('user.id'),primary_key=True)
+    users_one = db.relationship("user",foreign_keys=[user_one_id],lazy=True)
+    users_two = db.relationship("user",foreign_keys=[user_two_id])
+
+    def __init__(self,user_one,user_two):
+        self.user_one_id = user_one
+        self.user_two_id = user_two
 
 
 def get_db():
@@ -422,7 +432,7 @@ if __name__ == '__main__':
     db = get_db()
     db.drop_all()
     db.create_all()
-    # fill_db(30,db,User,Tender,Task,TaskLog,TaskNote,UserInTask)
+    fill_db(30,db,User,Tender,Task,TaskLog,TaskNote,UserInTask)
     insert_tender_templates()
     insert_task_templates()
     insert_task_dependencies()

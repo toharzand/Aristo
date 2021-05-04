@@ -70,7 +70,7 @@ def tender_wizard():
             names = extract_names(values)
             return redirect(url_for("main.tenders",values=values, len=len(values),names=names))
         except Exception as e:
-            print("error " + e)
+            print("error ", e)
 
     return render_template("tenderWizard.html")
 
@@ -319,38 +319,43 @@ def task(tid):
     if request.method == "POST":
         session.permanent = True
         try:
-            user_msg = request.form['msg']
-            time = datetime.now()
-            task_id = request.form['send']
-            conn = get_my_sql_connection()
-            cursor = conn.cursor()
-            query = f"""SELECT * FROM aristodb.tasksnotes
-                        where task_id = {task_id};"""
-            cursor.execute(query)
-            user_id = current_user.id
-            task_note = TaskNote(user_id,time,task_id,user_msg)
+            task_id = request.form['createDependency']
+            print(task_id)
+            return redirect(url_for("main.createDependency",task_id=task_id))
+        except Exception as e:
             try:
-                db.session.add(task_note)
-                db.session.commit()
-                print("data has been commited")
-                print("engine is on - popping notifications")
-                x = aristo_engine.add_task(addNotificationsChat(task_id))
-                x.wait_for_completion()
-                print("x is - ",x.get_data_once())
-                print(450)
+                user_msg = request.form['msg']
+                time = datetime.now()
+                task_id = request.form['send']
+                conn = get_my_sql_connection()
+                cursor = conn.cursor()
+                query = f"""SELECT * FROM aristodb.tasksnotes
+                            where task_id = {task_id};"""
+                cursor.execute(query)
+                user_id = current_user.id
+                task_note = TaskNote(user_id,time,task_id,user_msg)
+                try:
+                    db.session.add(task_note)
+                    db.session.commit()
+                    print("data has been commited")
+                    print("engine is on - popping notifications")
+                    x = aristo_engine.add_task(addNotificationsChat(task_id))
+                    x.wait_for_completion()
+                    print("x is - ",x.get_data_once())
+                    print(450)
 
+                except:
+                    db.session.rollback()
             except:
-                db.session.rollback()
-        except:
-            user_to_add = request.form['user']
-            try:
-                db.session.add(UserInTask(tid,user_to_add,"viewer"))
-                db.session.commit()
-                print("user has entered to task")
-                aristo_engine.add_task(addUserToTask(user_to_add,tid,type="משימה"))
-            except Exception as e:
-                db.session.rollback()
-                print("user already in task!")
+                user_to_add = request.form['user']
+                try:
+                    db.session.add(UserInTask(tid,user_to_add,"viewer"))
+                    db.session.commit()
+                    print("user has entered to task")
+                    aristo_engine.add_task(addUserToTask(user_to_add,tid,type="משימה"))
+                except Exception as e:
+                    db.session.rollback()
+                    print("user already in task!")
     print("build task page")
     task = Task.query.filter_by(task_id=tid).first()
     task_logs = TaskLog.query.filter_by(task_id = tid).all()
@@ -370,6 +375,38 @@ def task(tid):
         new_lst.append(User.query.filter_by(id=userIntask.user_id).first())
     print("new list",new_lst)
     return render_template("task.html",task=task,names = names,task_logs=task_logs,task_notes = notes,len=len(notes),user=user,all_users = User.query.all(),users_in_tasks=new_lst)
+
+
+@main.route("/createDependency/<task_id>",methods=["POST","GET"])
+@login_required
+def createDependency(task_id):
+    print("inside create dependency")
+    if request.method == "POST":
+        session.permanent = True
+        try:
+            depender_task_id = request.form['depender_task']
+            aristo_engine.add_task(createTaskDependency(depender_task_id,task_id))
+            return redirect(url_for("main.task",tid=task_id))
+        except Exception as e:
+            raise e
+    task = Task.query.filter_by(task_id=task_id).first()
+    tender = Tender.query.filter_by(tid=task.tender_id).first()
+    print(tender)
+    contact_guy = User.query.filter_by(id=tender.contact_user_from_department).first()
+    open_tasks = Task.query.filter_by(status="פתוח",tender_id=tender.tid).all()
+    on_prog_tasks = Task.query.filter_by(status="בעבודה",tender_id=tender.tid).all()
+    print(on_prog_tasks)
+    block_tasks = Task.query.filter_by(status="חסום",tender_id=tender.tid).all()
+    complete_tasks = Task.query.filter_by(status="הושלם",tender_id=tender.tid).all()
+    print(open_tasks)
+    return render_template("createDependency.html", tender=tender,contact_guy=contact_guy,
+                           open_tasks = open_tasks,on_prog_tasks=on_prog_tasks,
+                           block_tasks=block_tasks,complete_tasks=complete_tasks,get_user_name = lambda id: User.query.filter_by(id=id).first())
+
+
+
+
+
 
 @main.route("/about")
 def about():

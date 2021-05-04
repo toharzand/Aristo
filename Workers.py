@@ -502,22 +502,32 @@ def insert_task_dependencies():
                          tasks[28] : [tasks[29]]}
 
     for tender in TenderTemplate.query.all():
-        tid = tender.tid
         for key in dict_dependencies:
             for task in dict_dependencies[key]:
                 if task == key:
                     continue
                 try:
-                    print(key,task,tid)
-                    db.session.add(TaskDependenciesTemplate(key,task,tid))
-                    db.session.commit()
-                    print("commited")
+                    task_1 = TaskTemplate.query.filter_by(task_id=key).first()
+                    task_2 = TaskTemplate.query.filter_by(task_id=task).first()
+                    dep = TaskDependenciesTemplate(depender=task_1,dependee=task_2,tender_id=tender.tid)
+                    print(dep)
+                    db.session.add(dep)
+
                 except Exception as e:
                     db.session.rollback()
-                    print(e)
+                    raise e
+    db.session.commit()
+    print("commited")
 
 
 
 
 if __name__ == '__main__':
     insert_task_dependencies()
+    # dep = TaskDependenciesTemplate(1,2,1)
+    # try:
+    #     db.session.add(dep)
+    #     db.session.commit()
+    # except Exception as e:
+    #     print("not!")
+    #     raise e

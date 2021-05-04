@@ -408,6 +408,27 @@ class HeartBeat(MFTask):
             print("main site fail - rollback and call backup! hurry, the whole world is upon your shoulders.")
             pass
 
+class createTaskDependency(MFTask):
+
+    def __init__(self,depender_task_id,task_id):
+        super().__init__()
+        self.depender_task_id = depender_task_id
+        self.task_id = task_id
+
+    def process(self, engine=None):
+        #create the dependency
+        try:
+            dependency = TaskDependency(blocking=self.depender_task_id,blocked=self.task_id)
+            db.session.add(dependency)
+            db.session.commit()
+            print(f"db created - between depender - {self.depender_task_id} and dependee - {self.task_id}")
+        except Exeption as e:
+            print(e)
+            print("rolled back due to duplication")
+            db.session.rollback()
+
+
+
 
 
 class DailyTask(MFTask):
