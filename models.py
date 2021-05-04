@@ -303,6 +303,9 @@ class TaskTemplate(db.Model):
     description = db.Column(db.VARCHAR(500))
     time_delta = db.Column(db.Integer)
     # todo references
+    # depender = db.relationship("TaskDependenciesTemplate",backref="TasksTemplate",lazy=True)
+    # dependee = db.relationship("TaskDependenciesTemplate",backref="TasksTemplate",lazy=True)
+
     # task_1 = db.relationship('TaskDependenciesTemplate',backref='TasksTemplate',lazy=True)
 
     def __init__(self, status, subject, description, time_delta):
@@ -319,10 +322,9 @@ class TaskDependenciesTemplate(db.Model):
     """
     __tablename__ = "TasksDependenciesTemplate"
     depender_id = db.Column(db.Integer,db.ForeignKey('TasksTemplate.task_id'), primary_key=True,nullable=True)
-    depender = db.relationship("TaskTemplate", foreign_keys="TaskDependenciesTemplate.depender_id")
-
     dependee_id = db.Column(db.Integer,db.ForeignKey('TasksTemplate.task_id'), primary_key=True,nullable=True)
-    dependee = db.relationship("TaskTemplate", foreign_keys="TaskDependenciesTemplate.dependee_id")
+
+    depender = db.relationship("TasksDependenciesTemplate", backref="user", uselist=False, foreign_keys=[person_user_id])
 
     tender_id = db.Column(db.Integer,db.ForeignKey('TendersTemplate.tid'), primary_key=True,nullable=False)
 
@@ -333,7 +335,7 @@ class TaskDependenciesTemplate(db.Model):
         self.tender_id = tender_id
 
     def validate(self):
-        if self.dependee == self.dependent:
+        if self.dependee == self.depender:
             raise Exception
 
 class Notification(db.Model):
@@ -420,9 +422,10 @@ if __name__ == '__main__':
     db = get_db()
     db.drop_all()
     db.create_all()
-    fill_db(30,db,User,Tender,Task,TaskLog,TaskNote,UserInTask)
+    # fill_db(30,db,User,Tender,Task,TaskLog,TaskNote,UserInTask)
     insert_tender_templates()
     insert_task_templates()
+    insert_task_dependencies()
 
 
     # enter_fake_users_to_db(30,db,User)

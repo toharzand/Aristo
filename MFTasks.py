@@ -266,29 +266,30 @@ class UpdateTaskStatus(MFTask):
         self.status = status
         self.init_time = datetime.now()
 
+    def should_advance(self):
+        #  check if task should advance from 'blocked' to 'open' by checking if all it blockers are done
+        lst_of_task_blockers = cursor.execute(f"""
+                        SELECT td.blocking, t.status
+                        FROM tasksdependencies as td INNER JOIN Tasks as t 
+                        ON td.blocked = t.task_id
+                        WHERE blocked = {blocked_id} and blocking != {self.task_id}
+                    """)
+        for blocker_id, blocker_status in lst_of_task_blockers:
+            if blocker_status == "הושלם":
+                continue
+            else:
+                return False
+        return True
+
     def update_dependencies(self):
         conn = get_my_sql_connection()
         cursor = conn.cursor()
         lst_of_all_blocked = cursor.execute(f""" SELECT blocked
-                    FROM TaskDependency
+                    FROM tasksdependencies
                     WHERE blocking = {self.task_id}
                     """)
         for blocked_id in flatten(lst_of_all_blocked):
-            "check if task should advance from 'blocked' to 'open'"
-            lst_of_task_blockers = cursor.execute(f"""
-                SELECT td.blocking, t.status
-                FROM TaskDependency as td INNER JOIN Task as t 
-                ON td.blocked = t.task_id
-                HAVING blocked = {blocked_id} and blocking != {self.task_id}
-            """)
-            change_it_flag = True
-            for blocker_id, blocker_status in lst_of_task_blockers:
-                if blocker_status != "הושלם":
-                    continue
-                else:
-                    change_it_flag = False
-                    break
-            if change_it_flag:
+            if self.should_advance(blocked_id):
                 current_task = Task.query.filter_by(task_id=blocked_id).first()
                 current_task.status = "פתוח"
                 name = f"{self.user.first_name} {self.user.last_name}"

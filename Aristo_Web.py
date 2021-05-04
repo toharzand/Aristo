@@ -57,15 +57,18 @@ def tender_wizard():
             com_type = request.form["tenders_committee_Type"]
             dep = request.form["department"]
             proc_type = request.form["procedure_type"]
+            contact_user = request.form["contact_user_from_department"]
+            subject = request.form["subject"]
             print(com_type,dep,proc_type)
             print("prepare for query, this is id: ")
             tid_template = TenderTemplate.query.filter_by(tenders_committee_Type=com_type,procedure_type=proc_type,department=dep).first()
             if tid_template:
                 print("good")
-            res = aristo_engine.add_task(CreateTenderFromTemplate(tid_template.tid))
+            res = aristo_engine.add_task(CreateTenderFromTemplate(tid_template.tid,contact_user,subject))
             res.wait_for_completion()
             values = get_tenders_to_show()
             names = extract_names(values)
+            return redirect(url_for("main.tenders",values=values, len=len(values),names=names))
         except Exception as e:
             print("error " + e)
 

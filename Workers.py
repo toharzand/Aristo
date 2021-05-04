@@ -507,10 +507,9 @@ def insert_task_dependencies():
             for task in dict_dependencies[key]:
                 if task == key:
                     continue
-                depend = TaskDependenciesTemplate(key,task,tid)
-                print(key,task,tid)
                 try:
-                    db.session.add(depend)
+                    print(key,task,tid)
+                    db.session.add(TaskDependenciesTemplate(key,task,tid))
                     db.session.commit()
                     print("commited")
                 except Exception as e:
