@@ -468,23 +468,58 @@ class CreateTaskDependency:
         self.blocked_id = blocked
         self.blocking_id = blocking
         self.con = get_my_sql_connection().cursor()
+        self.number_of_iterations = get_db().session.query(TaskDependency).count()
+        self.g = {}
 
     def check_for_circle(self, current):
-        " searching for the blocking's id in all tasks that is blocked by it using recursion"
-        if current == self.blocking_id:
-            raise Exception(f"""
-                circle was found, couldn't complete the process:
-                {self.blocking} -> {self.blocked_id} -> ... {current} -> {self.blocking_id}""")
+        # " searching for the blocking's id in all tasks that is blocked by it using recursion "
+        self.number_of_iterations -= 1
+        if self.number_of_iterations < 0:
+            raise Exception("""
+            cannot complete the process. 
+            probably due to a dependencies circe not related to the latest dependency inserted.""")
         current_all_children = flatten(self.con.execute(f"""
             SELECT blocked
             FROM TasksDependencies
             WHERE blocking = {current}
             """))
         for child in current_all_children:
+            if child == self.blocking_id:
+                raise Exception(f"""
+                circle was found, couldn't complete the process:
+                {self.blocking} -> {self.blocked_id} -> ... -> {child} -> {self.blocking_id}""")
             self.check_for_circle(child)
+
+    def check_for_circle_DFS(self, current, concat):  # not working!
+        self.g[str(current)] = 1
+        concat += " -> " + str(current)
+        if current == self.blocking_id:
+            return True, concat
+        current_all_children = flatten(self.con.execute(f"""
+                    SELECT blocked
+                    FROM TasksDependencies
+                    WHERE blocking = {current}
+                    """))
+        for child in current_all_children:
+            str_child = str(child)
+            if str_child not in self.g.keys():
+                self.g[str_child] = 0
+            if self.g[str_child] == 0:
+                circle, concat = self.check_for_circle_DFS(child, concat)
+                if circle:
+                    return True, concat
+        self.g[current] = 2
+        return False, concat
 
 
     def process(self):
+        # # ----- option A: check for circle with DFS algorithm - safer and more informative but slightly slower -----
+        # conc = str(self.blocking_id)
+        # there_is_circle, info = self.check_for_circle_DFS(self.blocked_id, conc)
+        # if there_is_circle:
+        #     raise Exception("a circle found with the new insertion")
+
+        # ----- option B: check for new circle assuming there isn't a circle already  -----
         try:
             self.check_for_circle(self.blocked_id)  # an exception will be raised if a circle is found
         except Exception as e:
