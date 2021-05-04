@@ -87,7 +87,7 @@ class Tender(db.Model):
     subject = db.Column(db.VARCHAR(250), nullable=False)
     department = db.Column(db.VARCHAR(50))
     start_date = db.Column(db.DateTime(255), nullable=False)
-    finish_date = db.Column(db.DateTime(255), nullable=False)
+    finish_date = db.Column(db.DateTime(255), nullable=True)
     contact_user_from_department = db.Column(db.Integer, db.ForeignKey('Users.id'), nullable=False)
     tender_manager = db.Column(db.VARCHAR(50),nullable=False)
     # todo references

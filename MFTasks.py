@@ -5,8 +5,8 @@ try:
 except Exception as e:
     print("couldn't import aristoDB")
 from datetime import datetime
+import datetime
 import engine2_0
-import numpy
 
 
 def flatten(lst, i=0):
@@ -266,9 +266,9 @@ class UpdateTaskStatus(MFTask):
         self.status = status
         self.init_time = datetime.now()
 
-    def should_advance(self):
+    def should_advance(self, blocked_id):
         #  check if task should advance from 'blocked' to 'open' by checking if all it blockers are done
-        lst_of_task_blockers = cursor.execute(f"""
+        lst_of_task_blockers = get_my_sql_connection().cursor().execute(f"""
                         SELECT td.blocking, t.status
                         FROM tasksdependencies as td INNER JOIN Tasks as t 
                         ON td.blocked = t.task_id
@@ -314,7 +314,7 @@ class UpdateTaskStatus(MFTask):
             changeStatusLog = TaskLog(self.user.id,self.task_id,self.init_time,description)
             db.session.add(changeStatusLog)
             db.session.commit()
-            print("status changed - log commited")
+            print("status changed - log committed")
         except Exception as e:
             db.session.rollback()
             print("there was problem with logging the status change")
@@ -484,46 +484,47 @@ class AddUserTask(MFTask):
 
 
 class CreateTenderFromTemplate(MFTask):
-    def __init__(self, template_id, opening_date=datetime.now()):
+    def __init__(self, template_id, contact_user, subject, opening_date=datetime.now()):
         self.template_id = template_id
         self.opening_date = opening_date
+        self.contact_user = contact_user
+        self.subject = subject
         self.con = get_my_sql_connection().cursor()
         self.db = get_db()
 
     def create_template_from_tender_BFS(self, real_tender_id):
-        graph = {}  # {task_template_id : number (0=grey, 1=black)}
+        graph = {}  # {task_template_id : {color:(0=white, 1=grey, 2=black), task_real_id:()}}
 
         q = []
 
         lst_of_first_tasks_of_tender = self.con.excecute(f"""
-            SELECT dependant
-            FROM
-            TaskDependenciesTemplate
-            WHERE
-            tender_id = {self.template_tender_id} and depender_id = null
+            SELECT dependee_id
+            FROM TasksDependenciesTemplate
+            WHERE tender_id = {self.template_tender_id} and depender_id = null
             """)  # return list of all beginner tasks for the tender template
         for row in lst_of_first_tasks_of_tender:
             real_depender_id, real_depender_deadline, insertion_succeeded = self.create_real_task_from_template_task(real_tender_id, row[0], self.opening_date)  # teder_id , task_template
             q.append((row[0], real_depender_id, real_depender_deadline))
-            graph[row[0]] = 0  # painting the vertex
+            graph[row[0]] = {"color":1, "real_task_id":real_depender_id}  # painting the vertex
 
         while len(q) != 0:
             template_depender_id, real_depender_id, real_depender_deadline = q.pop(0)  # getting (task template id , task real id, task deadline)
             lst_of_template_dependees = self.con.excecute(f"""
             SELECT dependee_id
-            FROM
-            TaskDependenciesTemplate
-            WHERE
-            depender_id = {template_depender_id}
+            FROM TasksDependenciesTemplate
+            WHERE depender_id = {template_depender_id}
             """)  # = [(dependee1_id), (dependee1_id), (depender2_id)...])
             for row in lst_of_template_dependees:
-                #  todo - check logic!
                 if row[0] in graph.keys():
-                    if graph[row[0]] == 1:
-                        pass
-                    continue
-                #  todo - check valid - depender dependee!
-                real_dependee_id, real_dependee_deadline, insertion_succeeded = self.create_real_task_from_template_task(real_tender_id, row[0], real_dependee_deadline)
+                    if graph[row[0]]["color"] == 1:
+                        #  if color == 1 then we should only
+                        #  update its depender but not create it
+                        self.add_blocked_to_blocking(graph[row[0]]["real_task_id"], real_depender_id)
+                        continue
+                    if graph[row[0]]["color"] == 2:
+                        raise Exception(f"an insolvable circle was found: {row[0]}, {template_depender_id}")
+                        # continue
+                real_dependee_id, real_dependee_deadline, insertion_succeeded = self.create_real_task_from_template_task(real_tender_id, row[0], real_depender_deadline)
                 self.add_blocked_to_blocking(real_dependee_id, real_depender_id)
                 q.append((row[0], real_dependee_id, real_dependee_deadline))
                 graph[row[0]] = 1
@@ -534,27 +535,28 @@ class CreateTenderFromTemplate(MFTask):
         self.create_template_from_tender_BFS(real_tender_id)
         db.session.commit()
 
-    def create_real_tender_from_template(self):
+    def create_real_tender_from_template(self) -> str:
         "should return a real empty tender id (to fill later on with real tasks from template)"
         # todo - Itay
         pass
 
-    def create_real_task_from_template_task(self, real_tender_id, template_task_id, openning_date):
-        task_attributes = self.con.execute("""
+    def create_real_task_from_template_task(self, real_tender_id, template_task_id, opening_date):
+        task_attributes = self.con.execute(f"""
         SELECT *
-        FROM TaskTemplate
-        WHERE tid = ?
-        """, template_task_id)
+        FROM TasksTemplate
+        WHERE task_id = {template_task_id}
+        """)
         attributes = {
             "tender_id": real_tender_id,
-            "odt": openning_date,
-            "deadline": self.get_date_from_timedelta(openning_date, task_attributes[0][3]),
+            "odt": opening_date,
+            "deadline": self.get_date_from_timedelta(opening_date, task_attributes[0][3]),
             "finish": None,
             "status": task_attributes[0][0],
             "subject": task_attributes[0][1],
             "description": task_attributes[0][2],
         }
         try:
+            #  todo - validate attributes for the real task
             task = Task(**attributes)  # create real task from the template output
             db.session.add(task)
             db.session.commit()
@@ -578,13 +580,13 @@ class CreateTenderFromTemplate(MFTask):
             print(f"task dependancy insertion denied - depender {real_depender_id} | dependee {real_dependee_id}")
 
 
-    def get_date_from_timedelta(self, openning_date, days_delta):
+    def get_date_from_timedelta(self, opening_date, days_delta):
         """
-        :param openning_date: the date a task will be created
+        :param opening_date: the date a task will be created
         :param days_delta: the amount of days that a task should be taken to handle
         :return: datetime obj with the right deadline for a task
         """
-        pass  # todo
+        return opening_date + datetime.timedelta(days_delta)
 
 
 class GetTendersPageRespons(MFTask):
