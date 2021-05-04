@@ -385,7 +385,7 @@ def createDependency(task_id):
         session.permanent = True
         try:
             depender_task_id = request.form['depender_task']
-            aristo_engine.add_task(createTaskDependency(depender_task_id,task_id))
+            aristo_engine.add_task(CreateTaskDependency(depender_task_id,task_id))
             return redirect(url_for("main.task",tid=task_id))
         except Exception as e:
             raise e
