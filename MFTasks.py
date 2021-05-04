@@ -409,24 +409,25 @@ class HeartBeat(MFTask):
             print("main site fail - rollback and call backup! hurry, the whole world is upon your shoulders.")
             pass
 
-class createTaskDependency(MFTask):
-
-    def __init__(self,depender_task_id,task_id):
-        super().__init__()
-        self.depender_task_id = depender_task_id
-        self.task_id = task_id
-
-    def process(self, engine=None):
-        #create the dependency
-        try:
-            dependency = TaskDependency(blocking=self.depender_task_id,blocked=self.task_id)
-            db.session.add(dependency)
-            db.session.commit()
-            print(f"db created - between depender - {self.depender_task_id} and dependee - {self.task_id}")
-        except Exeption as e:
-            print(e)
-            print("rolled back due to duplication")
-            db.session.rollback()
+# --- replaced ---
+# class createTaskDependency(MFTask):
+#
+#     def __init__(self,depender_task_id,task_id):
+#         super().__init__()
+#         self.depender_task_id = depender_task_id
+#         self.task_id = task_id
+#
+#     def process(self, engine=None):
+#         #create the dependency
+#         try:
+#             dependency = TaskDependency(blocking=self.depender_task_id,blocked=self.task_id)
+#             db.session.add(dependency)
+#             db.session.commit()
+#             print(f"db created - between depender - {self.depender_task_id} and dependee - {self.task_id}")
+#         except Exception as e:
+#             print(e)
+#             print("rolled back due to duplication")
+#             db.session.rollback()
 
 
 
@@ -461,6 +462,41 @@ class SendEmail(MFTask):
                     print(f"failed to send email {count_try - 1} times!")
                 time.sleep(10)
 
+
+class CreateTaskDependency:
+    def __init__(self, blocking, blocked):
+        self.blocked_id = blocked
+        self.blocking_id = blocking
+        self.con = get_my_sql_connection().cursor()
+
+    def check_for_circle(self, current):
+        " searching for the blocking's id in all tasks that is blocked by it using recursion"
+        if current == self.blocking_id:
+            raise Exception(f"""
+                circle was found, couldn't complete the process:
+                {self.blocking} -> {self.blocked_id} -> ... {current} -> {self.blocking_id}""")
+        current_all_children = flatten(self.con.execute(f"""
+            SELECT blocked
+            FROM TasksDependencies
+            WHERE blocking = {current}
+            """))
+        for child in current_all_children:
+            self.check_for_circle(child)
+
+
+    def process(self):
+        try:
+            self.check_for_circle(self.blocked_id)  # an exception will be raised if a circle is found
+        except Exception as e:
+            print(e)
+            raise e
+        task_dependency = TaskDependency(blocked=self.blocked_id, blocking=self.blocking_id)
+        try:
+            db.session.add(task_dependency)
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            raise e
 
 
 
