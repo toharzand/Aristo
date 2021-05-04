@@ -490,7 +490,7 @@ class CreateTaskDependency:
                 {self.blocking} -> {self.blocked_id} -> ... -> {child} -> {self.blocking_id}""")
             self.check_for_circle(child)
 
-    def check_for_circle_DFS(self, current, concat):  # not working!
+    def check_for_circle_DFS(self, current, concat):
         self.g[str(current)] = 1
         concat += " -> " + str(current)
         if current == self.blocking_id:
@@ -508,23 +508,27 @@ class CreateTaskDependency:
                 circle, concat = self.check_for_circle_DFS(child, concat)
                 if circle:
                     return True, concat
+            if self.g[str_child] == 1:
+                return True, concat + " -> " + str_child
         self.g[current] = 2
         return False, concat
 
 
     def process(self):
-        # # ----- option A: check for circle with DFS algorithm - safer and more informative but slightly slower -----
-        # conc = str(self.blocking_id)
-        # there_is_circle, info = self.check_for_circle_DFS(self.blocked_id, conc)
-        # if there_is_circle:
-        #     raise Exception("a circle found with the new insertion")
-
-        # ----- option B: check for new circle assuming there isn't a circle already  -----
-        try:
-            self.check_for_circle(self.blocked_id)  # an exception will be raised if a circle is found
-        except Exception as e:
-            print(e)
-            raise e
+        # ----- option A: check for circle with DFS algorithm - safer and more informative but slightly slower -----
+        conc = str(self.blocking_id)
+        there_is_circle, info = self.check_for_circle_DFS(self.blocked_id, conc)
+        if there_is_circle:
+            raise Exception(f"""
+            a circle found with the new insertion:
+            {info}
+            """)
+        # # ----- option B: check for new circle assuming there isn't a circle already  -----
+        # try:
+        #     self.check_for_circle(self.blocked_id)  # an exception will be raised if a circle is found
+        # except Exception as e:
+        #     print(e)
+        #     raise e
         task_dependency = TaskDependency(blocked=self.blocked_id, blocking=self.blocking_id)
         try:
             db.session.add(task_dependency)
