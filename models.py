@@ -163,7 +163,7 @@ class TaskLog(db.Model):
 
     user_id = db.Column(db.Integer, db.ForeignKey("Users.id"), primary_key=True)
     init_time = db.Column(db.DateTime(255), primary_key=True)
-    task_id = db.Column(db.Integer, db.ForeignKey("Tasks.task_id"))
+    task_id = db.Column(db.Integer, db.ForeignKey("Tasks.task_id"), primary_key=True)
     description = db.Column(db.VARCHAR(255), nullable=False)
 
     def __init__(self,user_id, task_id, init_time, description):

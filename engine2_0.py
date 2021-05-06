@@ -41,10 +41,10 @@ class Engine:
 
     def daily_update(self):
         while not self.should_terminate:
-            # td = dt.datetime.today().replace(day=dt.datetime.today().day,
-            #                                  hour=2, minute=0, second=0,
-            #                                  microsecond=0) + dt.timedelta(days=1)
-            td = dt.datetime.today() + dt.timedelta(seconds=60)
+            td = dt.datetime.today().replace(day=dt.datetime.today().day,
+                                             hour=2, minute=0, second=0,
+                                             microsecond=0) + dt.timedelta(days=1)
+            # td = dt.datetime.today() + dt.timedelta(seconds=60)
             delta_t = td - dt.datetime.today()
             tot_sec = delta_t.total_seconds()
             time.sleep(tot_sec)

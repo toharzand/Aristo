@@ -182,7 +182,8 @@ def tender(tender):
                     # current_task.status = status
                     # db.session.commit()
                     res = aristo_engine.add_task(UpdateTaskStatus(task_id,current_user.id,status))
-                    res.wait_for_completion()
+                    if res.error_occurred():
+                        print(res.get_data_once())
                     print("change the status of the task")
                     return redirect(url_for("main.tender",tender=tender))
 
@@ -217,10 +218,14 @@ def newTender():
             subject = request.form['subject']
             department = request.form['department']
             try:
+                print("inside date time tender")
+                print(request.form['start_date'])
                 start_date = str_to_datetime(request.form['start_date'])
                 finish_date = str_to_datetime(request.form['finish_date'])
-            except:
-                start_date = datetime.now()
+            except Exception as e:
+                raise e
+                print("inside date time tender exception")
+                start_date =datetime.now()
                 finish_date = datetime.now()
             try:
                 name = request.form['contact_user_from_department'].split(" ")
@@ -252,7 +257,8 @@ def newTender():
                 db.session.rollback()
                 flash("יש להזין תאריכי התחלת וסיום המכרז")
         except Exception as e:
-            raise e
+            flash("קרתה תקלה")
+            print(e)
     return render_template("newTender.html")
 
 
@@ -342,8 +348,6 @@ def task(tid):
                     x = aristo_engine.add_task(addNotificationsChat(task_id))
                     x.wait_for_completion()
                     print("x is - ",x.get_data_once())
-                    print(450)
-
                 except:
                     db.session.rollback()
             except:
@@ -385,8 +389,13 @@ def createDependency(task_id):
         session.permanent = True
         try:
             depender_task_id = request.form['depender_task']
-            aristo_engine.add_task(CreateTaskDependency(depender_task_id,task_id))
-            return redirect(url_for("main.task",tid=task_id))
+            x=aristo_engine.add_task(CreateTaskDependency(depender_task_id,task_id))
+            if x.error_occurred():
+                print(str(x.get_data_once()))
+                flash("בחירה לא חוקית. ניסית ליצור תלות מעגלית!")
+            else:
+                print(x.get_data_once())
+                return redirect(url_for("main.task", tid=task_id))
         except Exception as e:
             raise e
     task = Task.query.filter_by(task_id=task_id).first()

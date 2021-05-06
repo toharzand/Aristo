@@ -102,6 +102,16 @@ background-color: #C0C0C0;
 </div>
 
 
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            {% for msg in messages %}
+                <p align="center" style="font-size:16">{{msg}}</p>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+
+
     <div align="center">
 <p>&nbsp;</p>
 <p>&nbsp;</p>

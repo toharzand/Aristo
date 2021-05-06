@@ -4,12 +4,13 @@ try:
     from models import *
 except Exception as e:
     print("couldn't import aristoDB")
-from datetime import datetime
-import datetime
+from datetime import datetime,timedelta
 import engine2_0
 
 
 def flatten(lst, i=0):
+    if lst is None:
+        return []
     if i >= len(lst):
         return lst
     if isinstance(lst[i], tuple) or isinstance(lst[i], list):
@@ -47,6 +48,7 @@ class MFResponse:
             me = engine2_0.get_futures()[self.__creator_id]
             self.data = me.data
             self.is_complete_att = me.is_complete_att
+            self.error = me.error
         return self.is_complete_att
 
     def set_data(self, data):
@@ -69,7 +71,8 @@ class MFResponse:
             return self.data
 
     def error_occurred(self):
-        return not self.error
+        self.wait_for_completion()
+        return self.error
 
 
     def __repr__(self):
@@ -264,32 +267,31 @@ class UpdateTaskStatus(MFTask):
         self.task_id = task_id
         self.user = User.query.filter_by(id=user_id).first()
         self.status = status
-        self.init_time = datetime.datetime.now()
+        self.init_time = datetime.now()
+        self.cursor = None
 
     def should_advance(self, blocked_id):
         #  check if task should advance from 'blocked' to 'open' by checking if all it blockers are done
-        lst_of_task_blockers = get_my_sql_connection().cursor().execute(f"""
+        self.cursor.execute(f"""
                         SELECT td.blocking, t.status
                         FROM tasksdependencies as td INNER JOIN Tasks as t 
                         ON td.blocked = t.task_id
                         WHERE blocked = {blocked_id} and blocking != {self.task_id}
                     """)
+        lst_of_task_blockers = self.cursor.fetchall()
         for blocker_id, blocker_status in lst_of_task_blockers:
-            if blocker_status == "הושלם":
-                continue
-            else:
-                return False
-        return True
+            if blocker_status != "הושלם":
+                return False, blocker_id
+        return True, None
 
     def update_dependencies(self):
-        conn = get_my_sql_connection()
-        cursor = conn.cursor()
-        lst_of_all_blocked = cursor.execute(f""" SELECT blocked
+        self.cursor.execute(f""" SELECT blocked
                     FROM tasksdependencies
                     WHERE blocking = {self.task_id}
                     """)
+        lst_of_all_blocked = self.cursor.fetchall()
         for blocked_id in flatten(lst_of_all_blocked):
-            if self.should_advance(blocked_id):
+            if self.should_advance(blocked_id)[0]:
                 current_task = Task.query.filter_by(task_id=blocked_id).first()
                 current_task.status = "פתוח"
                 name = f"{self.user.first_name} {self.user.last_name}"
@@ -298,21 +300,20 @@ class UpdateTaskStatus(MFTask):
                 db.session.add(changeStatusLog)
 
     def process(self, engine=None):
+        print("start process")
+        conn = get_my_sql_connection()
+        self.cursor = conn.cursor()
+        current_task = Task.query.filter_by(task_id=self.task_id).first()
+        if current_task.status == "חסום":
+            raise Exception(f"cannot advanced this task because it blocked by other task")
+        current_task.status = self.status
+        name = f"{self.user.first_name} {self.user.last_name}"
+        description = f"{name} שינה את סטטוס המשימה" + " " + f"ל-{self.status}"
+        print(description)
+        if self.status == "הושלם":
+            self.update_dependencies()
+        changeStatusLog = TaskLog(self.user.id,self.task_id,self.init_time,description)
         try:
-            print("start process")
-            current_task = Task.query.filter_by(task_id=self.task_id).first()
-            current_task.status = self.status
-            name = f"{self.user.first_name} {self.user.last_name}"
-            description = f"{name} שינה את סטטוס המשימה" + " " + f"ל-{self.status}"
-            print(description)
-            if self.status == "הושלם":
-                try:
-                    # self.update_dependencies()
-                    pass
-                except Exception as e:
-                    print(e)
-                    pass
-            changeStatusLog = TaskLog(self.user.id,self.task_id,self.init_time,description)
             db.session.add(changeStatusLog)
             db.session.commit()
             print("status changed - log committed")
@@ -410,7 +411,7 @@ class HeartBeat(MFTask):
             pass
 
 # --- replaced ---
-# class createTaskDependency(MFTask):
+# class CreateTaskDependency(MFTask):
 #
 #     def __init__(self,depender_task_id,task_id):
 #         super().__init__()
@@ -467,8 +468,9 @@ class CreateTaskDependency:
     def __init__(self, blocking, blocked):
         self.blocked_id = blocked
         self.blocking_id = blocking
-        self.con = get_my_sql_connection().cursor()
-        self.number_of_iterations = get_db().session.query(TaskDependency).count()
+        # self.con = get_my_sql_connection()
+        self.cursor = None
+        self.number_of_iterations = TaskDependency.query.count()
         self.g = {}
 
     def check_for_circle(self, current):
@@ -476,9 +478,9 @@ class CreateTaskDependency:
         self.number_of_iterations -= 1
         if self.number_of_iterations < 0:
             raise Exception("""
-            cannot complete the process. 
+            cannot complete the process.
             probably due to a dependencies circe not related to the latest dependency inserted.""")
-        current_all_children = flatten(self.con.execute(f"""
+        current_all_children = flatten(self.cursor.execute(f"""
             SELECT blocked
             FROM TasksDependencies
             WHERE blocking = {current}
@@ -495,11 +497,12 @@ class CreateTaskDependency:
         concat += " -> " + str(current)
         if current == self.blocking_id:
             return True, concat
-        current_all_children = flatten(self.con.execute(f"""
-                    SELECT blocked
+        query = f"""SELECT blocked
                     FROM TasksDependencies
-                    WHERE blocking = {current}
-                    """))
+                    WHERE blocking = {current}"""
+        self.cursor.execute(query)
+        current_all_children = flatten(self.cursor.fetchall())
+        print(f"current_all_children {current_all_children}")
         for child in current_all_children:
             str_child = str(child)
             if str_child not in self.g.keys():
@@ -513,8 +516,10 @@ class CreateTaskDependency:
         self.g[current] = 2
         return False, concat
 
-
     def process(self):
+        print("inside proccess of create task depend")
+        con = get_my_sql_connection()
+        self.cursor = con.cursor()
         # ----- option A: check for circle with DFS algorithm - safer and more informative but slightly slower -----
         conc = str(self.blocking_id)
         there_is_circle, info = self.check_for_circle_DFS(self.blocked_id, conc)
@@ -525,17 +530,22 @@ class CreateTaskDependency:
             """)
         # # ----- option B: check for new circle assuming there isn't a circle already  -----
         # try:
-        #     self.check_for_circle(self.blocked_id)  # an exception will be raised if a circle is found
+        #     self.check_for_circle(self.blocked_id,cursor)  # an exception will be raised if a circle is found
         # except Exception as e:
         #     print(e)
         #     raise e
+        print("no circle found - try to create taskDep obj")
         task_dependency = TaskDependency(blocked=self.blocked_id, blocking=self.blocking_id)
+        print(task_dependency.blocked,task_dependency.blocking)
         try:
+            print("trying to add to db dependencies")
             db.session.add(task_dependency)
             db.session.commit()
+            print("tasks dependency comitted")
         except Exception as e:
             db.session.rollback()
             raise e
+        return f"dependency create successfully {self.blocking_id} -> {self.blocked_id}"
 
 
 
@@ -586,7 +596,8 @@ class CreateTenderFromTemplate(MFTask):
         self.opening_date = datetime.now()
         self.contact_user = contact_user
         self.subject = subject
-        self.con = get_my_sql_connection().cursor()
+        self.con = get_my_sql_connection()
+        self.cur = self.con.cursor()
         self.db = get_db()
 
     def create_template_from_tender_BFS(self, real_tender_id):
@@ -594,7 +605,7 @@ class CreateTenderFromTemplate(MFTask):
 
         q = []
 
-        lst_of_first_tasks_of_tender = self.con.excecute(f"""
+        lst_of_first_tasks_of_tender = self.cur.excecute(f"""
             SELECT dependee_id
             FROM TasksDependenciesTemplate
             WHERE tender_id = {self.template_tender_id} and depender_id = null
@@ -606,7 +617,7 @@ class CreateTenderFromTemplate(MFTask):
 
         while len(q) != 0:
             template_depender_id, real_depender_id, real_depender_deadline = q.pop(0)  # getting (task template id , task real id, task deadline)
-            lst_of_template_dependees = self.con.excecute(f"""
+            lst_of_template_dependees = self.cur.excecute(f"""
             SELECT dependee_id
             FROM TasksDependenciesTemplate
             WHERE depender_id = {template_depender_id}
@@ -638,7 +649,7 @@ class CreateTenderFromTemplate(MFTask):
         pass
 
     def create_real_task_from_template_task(self, real_tender_id, template_task_id, opening_date):
-        task_attributes = self.con.execute(f"""
+        task_attributes = self.cur.execute(f"""
         SELECT *
         FROM TasksTemplate
         WHERE task_id = {template_task_id}
@@ -663,6 +674,7 @@ class CreateTenderFromTemplate(MFTask):
             print(e)
             get_db().session.rollback()
             print("task adding denied", print(f"real_tender_id {real_tender_id} | template_task_id {template_task_id}"))
+            self.con.close()
         return task.task_id, attributes["deadline"], success
 
 
@@ -683,7 +695,7 @@ class CreateTenderFromTemplate(MFTask):
         :param days_delta: the amount of days that a task should be taken to handle
         :return: datetime obj with the right deadline for a task
         """
-        return opening_date + datetime.timedelta(days_delta)
+        return opening_date + timedelta(days_delta)
 
 
 class GetTendersPageRespons(MFTask):

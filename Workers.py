@@ -69,7 +69,7 @@ def datetime_to_str(date):
     return datetime.strftime(date,"%d/%m/%Y")
 
 def str_to_datetime(string):
-    return datetime.strptime(string,'%Y-%d-%m')
+    return datetime.strptime(string,'%Y-%m-%d')
 
 def get_tenders_to_show(sorted=None):
     try:
