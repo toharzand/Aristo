@@ -591,25 +591,31 @@ class AddUserTask(MFTask):
 
 
 class CreateTenderFromTemplate(MFTask):
-    def __init__(self, template_id, contact_user, subject):
+    def __init__(self, template_id, contact_user, subject,protocol):
         self.template_id = template_id
         self.opening_date = datetime.now()
         self.contact_user = contact_user
+        self.contact_user = self.get_contact_id()
         self.subject = subject
-        self.con = get_my_sql_connection()
-        self.cur = self.con.cursor()
-        self.db = get_db()
+        self.protocol = protocol
+        self.cur = None
+
+
+    def get_contact_id(self):
+        n = self.contact_user.split(" ")
+        return User.query.filter_by(first_name=n[0],last_name=n[1]).first().id
 
     def create_template_from_tender_BFS(self, real_tender_id):
         graph = {}  # {task_template_id : {color:(0=white, 1=grey, 2=black), task_real_id:()}}
 
         q = []
 
-        lst_of_first_tasks_of_tender = self.cur.excecute(f"""
+        self.cur.excecute(f"""
             SELECT dependee_id
             FROM TasksDependenciesTemplate
             WHERE tender_id = {self.template_tender_id} and depender_id = null
             """)  # return list of all beginner tasks for the tender template
+        lst_of_first_tasks_of_tender = self.cur.fetchall()
         for row in lst_of_first_tasks_of_tender:
             real_depender_id, real_depender_deadline, insertion_succeeded = self.create_real_task_from_template_task(real_tender_id, row[0], self.opening_date)  # teder_id , task_template
             q.append((row[0], real_depender_id, real_depender_deadline))
@@ -617,11 +623,12 @@ class CreateTenderFromTemplate(MFTask):
 
         while len(q) != 0:
             template_depender_id, real_depender_id, real_depender_deadline = q.pop(0)  # getting (task template id , task real id, task deadline)
-            lst_of_template_dependees = self.cur.excecute(f"""
+            self.cur.excecute(f"""
             SELECT dependee_id
             FROM TasksDependenciesTemplate
             WHERE depender_id = {template_depender_id}
             """)  # = [(dependee1_id), (dependee1_id), (depender2_id)...])
+            lst_of_template_dependees = self.cur.fetchall()
             for row in lst_of_template_dependees:
                 if row[0] in graph.keys():
                     if graph[row[0]]["color"] == 1:
@@ -639,21 +646,46 @@ class CreateTenderFromTemplate(MFTask):
             graph[template_depender_id] = 2
 
     def process(self):
+        conn = get_my_sql_connection()
+        self.cur = conn.cursor()
         real_tender_id = self.create_real_tender_from_template()
         self.create_template_from_tender_BFS(real_tender_id)
         db.session.commit()
 
-    def create_real_tender_from_template(self) -> str:
+    def create_real_tender_from_template(self):
         "should return a real empty tender id (to fill later on with real tasks from template)"
         # todo - Itay
-        pass
+        print("create_real_tender_from_template")
+        tender = TenderTemplate.query.filter_by(tid=self.template_id).first()
+
+        try:
+            new_tender = Tender(self.protocol,tender.tenders_committee_Type,tender.procedure_type,
+                                self.subject,department=tender.department,start_date=datetime.now(),finish_date=None,
+                                contact_user_from_department=self.contact_user,tender_manager=self.contact_user)
+
+            db.session.add(new_tender)
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            raise e
+
+        query = """select tid from tenders
+                    order by tid desc
+                    limit 1"""
+        self.cur.execute(query)
+        print(self.cur.fetchone()[0])
+        print("create_real_tender_from_template - finish")
+        return self.cur.fetchone()[0]
+
+
 
     def create_real_task_from_template_task(self, real_tender_id, template_task_id, opening_date):
-        task_attributes = self.cur.execute(f"""
+        self.cur.execute(f"""
         SELECT *
         FROM TasksTemplate
         WHERE task_id = {template_task_id}
         """)
+        task_attributes = self.cur.fetchall()
         attributes = {
             "tender_id": real_tender_id,
             "odt": opening_date,
