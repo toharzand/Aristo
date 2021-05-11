@@ -255,6 +255,10 @@ class TaskDependency(db.Model):
     blocked = db.Column(db.Integer, db.ForeignKey('Tasks.task_id'), primary_key=True, nullable=False)
     blocking = db.Column(db.Integer, db.ForeignKey('Tasks.task_id'), primary_key=True, nullable=False)
 
+    blocked_id = db.relationship("Task",foreign_keys=[blocked],lazy=True)
+    blocking_id = db.relationship("Task",foreign_keys=[blocking],lazy=True)
+
+
     def __init__(self, blocked, blocking):
         self.blocked = blocked
         self.blocking = blocking
@@ -429,13 +433,16 @@ def get_my_sql_connection():
 
 
 if __name__ == '__main__':
-    db = get_db()
-    db.drop_all()
-    db.create_all()
-    fill_db(30,db,User,Tender,Task,TaskLog,TaskNote,UserInTask)
-    insert_tender_templates()
-    insert_task_templates()
-    insert_task_dependencies()
+    pass
+
+
+    # db = get_db()
+    # db.drop_all()
+    # db.create_all()
+    # fill_db(30,db,User,Tender,Task,TaskLog,TaskNote,UserInTask)
+    # insert_tender_templates()
+    # insert_task_templates()
+    # insert_task_dependencies()
 
 
     # enter_fake_users_to_db(30,db,User)

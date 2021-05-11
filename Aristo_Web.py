@@ -85,14 +85,6 @@ def tenders():
         session.permanent = True
         try:
             if request.form['user']:
-                # my_obj = aristo_engine.add_task(MFTasks.GetTendersPageRespons(request, db))
-                # # time.sleep(10)
-                # while not my_obj.is_complete():
-                #     time.sleep(0.5)
-                #     print("still waiting")
-                #     continue
-                # print("my obj",my_obj.is_complete())
-                print(request.form['user'])
                 return redirect(url_for("main.tender",tender=request.form['user']))
         except Exception as e:
             print(e)
@@ -145,6 +137,12 @@ def tender(tender):
                 print("response send from delete button")
                 try:
                     tender_to_delete = Tender.query.filter_by(tid=tender).first()
+                    tasks_relate_to_tender = Task.query.filter_by(tender_id=tender_to_delete.tid).all()
+                    for task in tasks_relate_to_tender:
+                        dependencies_to_delete = TaskDependency.query.filter_by(blocked = task.task_id).all()
+                        for depend in dependencies_to_delete:
+                            db.session.delete(depend)
+                    db.session.commit
                     db.session.delete(tender_to_delete)
                     db.session.commit()
                     # aristo_engine.add_task(DeleteTenderDependencies(tender))
@@ -332,6 +330,21 @@ def task(tid):
             return redirect(url_for("main.createDependency",task_id=task_id))
         except Exception as e:
             try:
+                if request.form.get("delete"):
+                    print("on delete")
+                    task = Task.query.filter_by(task_id=tid).first()
+                    dependencies_to_delete = TaskDependency.query.filter_by(blocked = task.task_id).all()
+                    dependencies_to_delete += TaskDependency.query.filter_by(blocking = task.task_id).all()
+                    for depend in dependencies_to_delete:
+                        db.session.delete(depend)
+                    try:
+                        db.session.delete(task)
+                        db.session.commit()
+                        print("task deleted - redirect to tender page", task.tender_id)
+                        return redirect(url_for("main.tender", tender=task.tender_id))
+                    except Exception as e:
+                        print(e)
+                        db.session.rollback()
                 user_msg = request.form['msg']
                 time = datetime.now()
                 task_id = request.form['send']

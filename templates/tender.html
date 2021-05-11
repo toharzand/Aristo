@@ -167,13 +167,7 @@ background-color: #C0C0C0;
         <p style="float:center; display: inline-block;">{{task.deadline.date()}}</p>
         <p style="float:left; margin-left:5px; display: inline-block;">{{get_user_name(task.task_owner_id).first_name}} {{get_user_name(task.task_owner_id).last_name}}</p>
         <p>&nbsp;<p/>
-        <button type="submit" name="view_task" id="view_task" value="{{task.task_id}}" dir="rtl" class="button button1" style="float:right;">צפה במשימה</button>
-        <select dir="rtl" name="status" id="status" onchange="this.form.submit()">
-          <option value="" disabled selected>שנה סטטוס</option>
-          <option value="{{[1,task.task_id]}}">&#128309;</option>
-          <option value="{{[2,task.task_id]}}">&#128993;</option>
-          <option value="{{[4,task.task_id]}}">&#128994;</option>
-        </select>
+        <button type="submit" name="view_task" id="view_task" value="{{task.task_id}}" dir="rtl" class="button button1" style="float:center;">צפה במשימה</button>
       </div>
     {% endfor %}
   </div>
