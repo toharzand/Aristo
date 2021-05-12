@@ -114,8 +114,9 @@ def tenders():
                             return render_template("tenders.html", values=values, len=len(values),names=extract_names(values))
                         except:
                             values = get_tenders_to_show()
+
                             return render_template("tenders.html", values=values, len=len(values),
-                                                   names=extract_names(values))
+                                                   names=extract_names(values),)
 
 
     values = get_tenders_to_show()
@@ -137,6 +138,13 @@ def tender(tender):
                 print("response send from delete button")
                 try:
                     tender_to_delete = Tender.query.filter_by(tid=tender).first()
+                    print(tender_to_delete.tender_manager)
+                    print(current_user.id)
+                    if tender_to_delete.tender_manager != current_user.id:
+                        print("True - toy are here")
+                        flash("רק למנהל המכרז יש הרשאה למחיקה")
+                        # return redirect(url_for("main.tenders"))
+                        raise Exception
                     tasks_relate_to_tender = Task.query.filter_by(tender_id=tender_to_delete.tid).all()
                     for task in tasks_relate_to_tender:
                         dependencies_to_delete = TaskDependency.query.filter_by(blocked = task.task_id).all()
@@ -194,13 +202,14 @@ def tender(tender):
     tender = Tender.query.filter_by(tid=tender).first()
     print(tender)
     contact_guy = User.query.filter_by(id=tender.contact_user_from_department).first()
+    manager = User.query.filter_by(id=tender.tender_manager).first()
     open_tasks = Task.query.filter_by(status="פתוח",tender_id=tender.tid).all()
     on_prog_tasks = Task.query.filter_by(status="בעבודה",tender_id=tender.tid).all()
     print(on_prog_tasks)
     block_tasks = Task.query.filter_by(status="חסום",tender_id=tender.tid).all()
     complete_tasks = Task.query.filter_by(status="הושלם",tender_id=tender.tid).all()
     print(open_tasks)
-    return render_template("tender.html", tender=tender,contact_guy=contact_guy,
+    return render_template("tender.html", tender=tender,contact_guy=contact_guy,manager=manager,
                            open_tasks = open_tasks,on_prog_tasks=on_prog_tasks,
                            block_tasks=block_tasks,complete_tasks=complete_tasks,get_user_name = lambda id: User.query.filter_by(id=id).first())
 
@@ -222,25 +231,27 @@ def newTender():
                 print(request.form['start_date'])
                 start_date = str_to_datetime(request.form['start_date'])
                 finish_date = str_to_datetime(request.form['finish_date'])
+                print(start_date)
+                print(finish_date)
             except Exception as e:
                 raise e
                 print("inside date time tender exception")
                 start_date =datetime.now()
                 finish_date = datetime.now()
             try:
-                name = request.form['contact_user_from_department'].split(" ")
-                contact_user_id = User.query.filter_by(first_name = name[0],last_name = name[1]).first()
-                print("con user: ",contact_user_id.id)
+                # name = request.form['contact_user_from_department'].split(" ")
+                contact_user_id = request.form['contact_user_from_department']
+                print("con user: ",contact_user_id)
             except:
                 if name == "":
                     flash("יש להזין את שם הגורם מטעם היחידה")
                 else:
                     flash("שם איש הקשר לא  נמצא במערכת")
-                return render_template("newTender.html")
+                return render_template("newTender.html",users = User.query.all())
             tender_manager = request.form['tender_manager']
             tender = Tender(protocol_number,tenders_committee_Type,procedure_type,
                             subject,department,start_date,finish_date,
-                            contact_user_id.id,tender_manager)
+                            contact_user_id,tender_manager)
             try:
                 print(tender.contact_user_from_department)
                 contact_guy = User.query.filter_by(id=tender.contact_user_from_department).first()
@@ -259,7 +270,7 @@ def newTender():
         except Exception as e:
             flash("קרתה תקלה")
             print(e)
-    return render_template("newTender.html")
+    return render_template("newTender.html",users = User.query.all())
 
 
 @main.route("/newTask/<tid>",methods=["POST", "GET"])

@@ -83,6 +83,17 @@ div {
 
 .button1 {background-color: #4CAF50;} /* Green */
 
+
+select {
+  width: 20%;
+  padding: 12px 20px;
+  margin: 8px 0;
+  display: inline-block;
+  border: 3px solid #ccc;
+  border-radius: 50px;
+  box-sizing: border-box;
+}
+
 </style>
   <form action="#" method="post">
     <div align="center" style="padding:10px">
@@ -94,7 +105,13 @@ div {
 <div align="center">
     <input type="text" id="subject" name="subject" placeholder="נושא המכרז" dir="rtl">
     <input type="text" id="department" name="department" placeholder="יחידה מקצועית" dir="rtl">
-    <input type="text" id="contact_user_from_department" name="contact_user_from_department" placeholder="גורם מטעם היחידה" dir="rtl">
+    <select dir="rtl" name="contact_user_from_department" id="contact_user_from_department">
+    <option value="" disabled selected>גורם מטעם היחידה</option>
+    {% for user in users %}
+      <option value="{{user.id}}">{{user.first_name}} {{user.last_name}}</option>
+    {% endfor %}
+  </select>
+
     <script type="text/javascript">
       function passMultipleUsers(){
         var names = {{x}}
@@ -105,7 +122,12 @@ div {
 <div align="center">
     <input placeholder="תאריך סיום מכרז" type="text" onfocus="(this.type = 'date')"  id="finish_date" name="finish_date" dir="rtl">
      <input placeholder="תאריך תחילת מכרז" type="text" onfocus="(this.type = 'date')"  id="start_date" name="start_date" dir="rtl">
-    <input type="text" id="tender_manager" name="tender_manager" placeholder="מנהל המכרז" dir="rtl">
+      <select dir="rtl" name="tender_manager" id="tender_manager">
+    <option value="" disabled selected>מנהל המכרז</option>
+    {% for user in users %}
+      <option value="{{user.id}}">{{user.first_name}} {{user.last_name}}</option>
+    {% endfor %}
+  </select>
     {% with messages = get_flashed_messages() %}
         {% if messages %}
             {% for msg in messages %}
