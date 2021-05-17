@@ -85,14 +85,6 @@ def tenders():
         session.permanent = True
         try:
             if request.form['user']:
-                # my_obj = aristo_engine.add_task(MFTasks.GetTendersPageRespons(request, db))
-                # # time.sleep(10)
-                # while not my_obj.is_complete():
-                #     time.sleep(0.5)
-                #     print("still waiting")
-                #     continue
-                # print("my obj",my_obj.is_complete())
-                print(request.form['user'])
                 return redirect(url_for("main.tender",tender=request.form['user']))
         except Exception as e:
             print(e)
@@ -122,8 +114,9 @@ def tenders():
                             return render_template("tenders.html", values=values, len=len(values),names=extract_names(values))
                         except:
                             values = get_tenders_to_show()
+
                             return render_template("tenders.html", values=values, len=len(values),
-                                                   names=extract_names(values))
+                                                   names=extract_names(values),)
 
 
     values = get_tenders_to_show()
@@ -145,6 +138,15 @@ def tender(tender):
                 print("response send from delete button")
                 try:
                     tender_to_delete = Tender.query.filter_by(tid=tender).first()
+                    if int(tender_to_delete.tender_manager) != current_user.id:
+                        print(f"{tender_to_delete.tender_manager != current_user.id} - toy are here")
+                        return redirect(url_for("main.tender",tender=tender_to_delete.tid))
+                    tasks_relate_to_tender = Task.query.filter_by(tender_id=tender_to_delete.tid).all()
+                    for task in tasks_relate_to_tender:
+                        dependencies_to_delete = TaskDependency.query.filter_by(blocked = task.task_id).all()
+                        for depend in dependencies_to_delete:
+                            db.session.delete(depend)
+                    db.session.commit
                     db.session.delete(tender_to_delete)
                     db.session.commit()
                     # aristo_engine.add_task(DeleteTenderDependencies(tender))
@@ -196,13 +198,14 @@ def tender(tender):
     tender = Tender.query.filter_by(tid=tender).first()
     print(tender)
     contact_guy = User.query.filter_by(id=tender.contact_user_from_department).first()
+    manager = User.query.filter_by(id=tender.tender_manager).first()
     open_tasks = Task.query.filter_by(status="פתוח",tender_id=tender.tid).all()
     on_prog_tasks = Task.query.filter_by(status="בעבודה",tender_id=tender.tid).all()
     print(on_prog_tasks)
     block_tasks = Task.query.filter_by(status="חסום",tender_id=tender.tid).all()
     complete_tasks = Task.query.filter_by(status="הושלם",tender_id=tender.tid).all()
     print(open_tasks)
-    return render_template("tender.html", tender=tender,contact_guy=contact_guy,
+    return render_template("tender.html", tender=tender,contact_guy=contact_guy,manager=manager,
                            open_tasks = open_tasks,on_prog_tasks=on_prog_tasks,
                            block_tasks=block_tasks,complete_tasks=complete_tasks,get_user_name = lambda id: User.query.filter_by(id=id).first())
 
@@ -224,25 +227,27 @@ def newTender():
                 print(request.form['start_date'])
                 start_date = str_to_datetime(request.form['start_date'])
                 finish_date = str_to_datetime(request.form['finish_date'])
+                print(start_date)
+                print(finish_date)
             except Exception as e:
                 raise e
                 print("inside date time tender exception")
                 start_date =datetime.now()
                 finish_date = datetime.now()
             try:
-                name = request.form['contact_user_from_department'].split(" ")
-                contact_user_id = User.query.filter_by(first_name = name[0],last_name = name[1]).first()
-                print("con user: ",contact_user_id.id)
+                # name = request.form['contact_user_from_department'].split(" ")
+                contact_user_id = request.form['contact_user_from_department']
+                print("con user: ",contact_user_id)
             except:
                 if name == "":
                     flash("יש להזין את שם הגורם מטעם היחידה")
                 else:
                     flash("שם איש הקשר לא  נמצא במערכת")
-                return render_template("newTender.html")
+                return render_template("newTender.html",users = User.query.all())
             tender_manager = request.form['tender_manager']
             tender = Tender(protocol_number,tenders_committee_Type,procedure_type,
                             subject,department,start_date,finish_date,
-                            contact_user_id.id,tender_manager)
+                            contact_user_id,tender_manager)
             try:
                 print(tender.contact_user_from_department)
                 contact_guy = User.query.filter_by(id=tender.contact_user_from_department).first()
@@ -261,7 +266,7 @@ def newTender():
         except Exception as e:
             flash("קרתה תקלה")
             print(e)
-    return render_template("newTender.html")
+    return render_template("newTender.html",users = User.query.all())
 
 
 @main.route("/newTask/<tid>",methods=["POST", "GET"])
@@ -332,6 +337,26 @@ def task(tid):
             return redirect(url_for("main.createDependency",task_id=task_id))
         except Exception as e:
             try:
+                if request.form.get("delete"):
+                    print("on delete")
+                    task = Task.query.filter_by(task_id=tid).first()
+                    get_user = UserInTask.query.filter_by(task_id=tid,permissions='creator').first()
+                    print(current_user.id)
+                    print(get_user.user_id)
+                    if get_user.user_id != current_user.id:
+                        return redirect(url_for("main.task",tid=tid))
+                    dependencies_to_delete = TaskDependency.query.filter_by(blocked = task.task_id).all()
+                    dependencies_to_delete += TaskDependency.query.filter_by(blocking = task.task_id).all()
+                    for depend in dependencies_to_delete:
+                        db.session.delete(depend)
+                    try:
+                        db.session.delete(task)
+                        db.session.commit()
+                        print("task deleted - redirect to tender page", task.tender_id)
+                        return redirect(url_for("main.tender", tender=task.tender_id))
+                    except Exception as e:
+                        print(e)
+                        db.session.rollback()
                 user_msg = request.form['msg']
                 time = datetime.now()
                 task_id = request.form['send']
@@ -393,13 +418,14 @@ def createDependency(task_id):
             depender_task_id = request.form['depender_task']
             x=aristo_engine.add_task(CreateTaskDependency(depender_task_id,task_id))
             if x.error_occurred():
-                print(str(x.get_data_once()))
+                if x.get_data_once() == "תלות זו קיימת. אנא בחרו משימה אחרת":
+                    flash(x.get_data_once())
                 flash("בחירה לא חוקית. ניסית ליצור תלות מעגלית!")
             else:
                 print(x.get_data_once())
                 return redirect(url_for("main.task", tid=task_id))
         except Exception as e:
-            raise e
+            flash("תלות זו כבר קיימת! אנא בחר משימה אחרת")
     task = Task.query.filter_by(task_id=task_id).first()
     tender = Tender.query.filter_by(tid=task.tender_id).first()
     print(tender)

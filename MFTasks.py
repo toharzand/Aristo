@@ -544,10 +544,27 @@ class CreateTaskDependency:
             print("tasks dependency comitted")
         except Exception as e:
             db.session.rollback()
-            raise e
+            return f"תלות זו קיימת. אנא בחרו משימה אחרת"
+
         return f"dependency create successfully {self.blocking_id} -> {self.blocked_id}"
 
+class AddUserToTender(MFTask):
 
+    def __init__(self,tid,uid):
+        super().__init__()
+        self.tid = tid
+        self.uid = uid
+
+    def process(self, engine=None):
+        user_in_tender = UserInTender(tender_id=self.tid,user_id=uid)
+        try:
+            print("start add user to tender")
+            db.session.add(user_in_tender)
+            db.session.commit()
+            print("user register to tender succusfully")
+        except Exception as e:
+            db.session.rollback()
+            print(e)
 
 class AddUserTask(MFTask):
     def __init__(self, first_name, last_name, email, password):

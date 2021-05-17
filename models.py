@@ -43,7 +43,7 @@ class User(UserMixin,db.Model):
     email = db.Column(db.String(100), nullable=False, unique=True)
     password = db.Column(db.String(100), nullable=False)
     # todo references
-    contact_user = db.relationship('Tender', backref=db.backref('User'), lazy=True)
+    # contact_user = db.relationship('Tender', backref=db.backref('User'), lazy=True)
     # manager_tender = db.relationship('Tender', backref=db.backref('User'), lazy=True)
     task = db.relationship('UserInTask', backref=db.backref('User'), lazy=True)
     file = db.relationship('FileInTask', backref=db.backref('User'), lazy=True)
@@ -51,6 +51,7 @@ class User(UserMixin,db.Model):
     user_task_log = db.relationship('TaskLog', backref=db.backref('User'), lazy=True)
     user_notification = db.relationship('Notification',backref=db.backref('User'), lazy=True)
     task_owner_user = db.relationship('Task', backref=db.backref('User'), lazy=True)
+    user_in_tender = db.relationship('UserInTender', backref=db.backref('User'), lazy=True)
 
     def __init__(self, first_name, last_name, email, password):
         self.first_name = first_name
@@ -89,14 +90,17 @@ class Tender(db.Model):
     start_date = db.Column(db.DateTime(255), nullable=False)
     finish_date = db.Column(db.DateTime(255), nullable=True)
     contact_user_from_department = db.Column(db.Integer, db.ForeignKey('Users.id'), nullable=False)
-    tender_manager = db.Column(db.VARCHAR(50),nullable=False)
+    tender_manager = db.Column(db.Integer,db.ForeignKey('Users.id'),nullable=False)
     # todo references
     task = db.relationship('Task', backref='Tender',cascade="all,delete", lazy=True)
     notification_in_tender = db.relationship('NotificationInTender',cascade="all,delete", backref='Tenders', lazy=True)
+    con_user = db.relationship("User",foreign_keys=[contact_user_from_department],lazy=True)
+    tender_man = db.relationship("User",foreign_keys=[tender_manager],lazy=True)
+    tender_with_user = db.relationship("UserInTender",backref='Tender',cascade="all,delete",lazy=True)
 
 
     def __init__(self, protocol_number, tenders_committee_Type, procedure_type, subject, department, start_date,
-                 finish_date, contact_user_from_department, tender_manager):
+                 finish_date, contact_user_from_department,tender_manager):
         self.protocol_number = protocol_number
         self.tenders_committee_Type = tenders_committee_Type
         self.procedure_type = procedure_type
@@ -214,6 +218,26 @@ class UserInTask(db.Model):
         self.permissions = permissions
 
 
+
+class UserInTender(db.Model):
+    '''
+        @Name : UserInTender
+        @Do: create table that contain for each user all the tenders that he is assign
+        @ Param:
+                tender_id - tender indication number.
+                user_id - user id.
+    '''
+
+    __tablename__ = "UsersInTenders"
+
+    tender_id = db.Column(db.Integer, db.ForeignKey('Tenders.tid'), primary_key=True, nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('Users.id'), primary_key=True, nullable=False)
+
+    def __init__(self, tender_id, user_id):
+        self.tender_id = tender_id
+        self.user_id = user_id
+
+
 class FileInTask(db.Model):
     '''
         @Name : FilesInTasks
@@ -254,6 +278,10 @@ class TaskDependency(db.Model):
 
     blocked = db.Column(db.Integer, db.ForeignKey('Tasks.task_id'), primary_key=True, nullable=False)
     blocking = db.Column(db.Integer, db.ForeignKey('Tasks.task_id'), primary_key=True, nullable=False)
+
+    blocked_id = db.relationship("Task",foreign_keys=[blocked],lazy=True)
+    blocking_id = db.relationship("Task",foreign_keys=[blocking],lazy=True)
+
 
     def __init__(self, blocked, blocking):
         self.blocked = blocked
@@ -429,13 +457,16 @@ def get_my_sql_connection():
 
 
 if __name__ == '__main__':
-    db = get_db()
-    db.drop_all()
-    db.create_all()
-    fill_db(30,db,User,Tender,Task,TaskLog,TaskNote,UserInTask)
-    insert_tender_templates()
-    insert_task_templates()
-    insert_task_dependencies()
+    pass
+
+
+    # db = get_db()
+    # db.drop_all()
+    # db.create_all()
+    # fill_db(30,db,User,Tender,Task,TaskLog,TaskNote,UserInTask)
+    # insert_tender_templates()
+    # insert_task_templates()
+    # insert_task_dependencies()
 
 
     # enter_fake_users_to_db(30,db,User)

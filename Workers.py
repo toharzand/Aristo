@@ -21,7 +21,10 @@ def extract_names(values):
         u_id = val[5]
         user_name = models.User.query.filter_by(id=u_id).first()
         user_name = f"{user_name.first_name} {user_name.last_name}"
-        names.append(user_name)
+        u2_id = val[6]
+        user2_name = models.User.query.filter_by(id=u2_id).first()
+        user2_name = f"{user2_name.first_name} {user2_name.last_name}"
+        names.append((user_name,user2_name))
     return names
 
 def enter_tenders_to_db(Tenders,db,number_of_tenders_to_add):
@@ -95,6 +98,15 @@ def get_tenders_to_show(sorted=None):
 
         for tender_id in res:
             my_lst.append(models.Tender.query.filter_by(tid=tender_id).first())
+
+        tenders_for_user = models.Tender.query.filter_by(tender_manager=current_user.id).all()
+        tenders_for_user += models.Tender.query.filter_by(contact_user_from_department=current_user.id).all()
+
+
+        my_lst += tenders_for_user
+
+        my_lst = list(set(my_lst))
+
         values = return_values(my_lst)
         for val in values:
             print(val)
@@ -103,7 +115,6 @@ def get_tenders_to_show(sorted=None):
         values = []
         print("here")
         print(e)
-        raise e
 
 
 
