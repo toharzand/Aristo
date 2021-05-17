@@ -619,7 +619,7 @@ class CreateTenderFromTemplate(MFTask):
         for row in lst_of_first_tasks_of_tender:
             real_depender_id, real_depender_deadline, insertion_succeeded = self.create_real_task_from_template_task(real_tender_id, row[0], self.opening_date)  # teder_id , task_template
             q.append((row[0], real_depender_id, real_depender_deadline))
-            graph[row[0]] = {"color":1, "real_task_id":real_depender_id}  # painting the vertex
+            graph[str(row[0])] = {"color":1, "real_task_id":real_depender_id}  # painting the vertex
 
         while len(q) != 0:
             template_depender_id, real_depender_id, real_depender_deadline = q.pop(0)  # getting (task template id , task real id, task deadline)
@@ -630,20 +630,20 @@ class CreateTenderFromTemplate(MFTask):
             """)  # = [(dependee1_id), (dependee1_id), (depender2_id)...])
             lst_of_template_dependees = self.cur.fetchall()
             for row in lst_of_template_dependees:
-                if row[0] in graph.keys():
-                    if graph[row[0]]["color"] == 1:
+                if str(row[0]) in graph.keys():
+                    if graph[str(row[0])]["color"] == 1:
                         #  if color == 1 then we should only
                         #  update its depender but not create it
                         self.add_blocked_to_blocking(graph[row[0]]["real_task_id"], real_depender_id)
                         continue
-                    if graph[row[0]]["color"] == 2:
+                    if graph[str(row[0])]["color"] == 2:
                         raise Exception(f"an insolvable circle was found: {row[0]}, {template_depender_id}")
                         # continue
                 real_dependee_id, real_dependee_deadline, insertion_succeeded = self.create_real_task_from_template_task(real_tender_id, row[0], real_depender_deadline)
                 self.add_blocked_to_blocking(real_dependee_id, real_depender_id)
                 q.append((row[0], real_dependee_id, real_dependee_deadline))
-                graph[row[0]] = 1
-            graph[template_depender_id] = 2
+                graph[str(row[0])]["color"] = 1
+            graph[str(template_depender_id)]["color"] = 2
 
     def process(self):
         conn = get_my_sql_connection()
