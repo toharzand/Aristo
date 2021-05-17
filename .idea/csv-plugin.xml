@@ -31,6 +31,13 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="\auth.py">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="\engine2_0.py">
           <value>
             <Attribute>

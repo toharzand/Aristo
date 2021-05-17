@@ -105,6 +105,8 @@ def get_tenders_to_show(sorted=None):
 
         my_lst += tenders_for_user
 
+        my_lst = list(set(my_lst))
+
         values = return_values(my_lst)
         for val in values:
             print(val)
@@ -113,7 +115,6 @@ def get_tenders_to_show(sorted=None):
         values = []
         print("here")
         print(e)
-        raise e
 
 
 

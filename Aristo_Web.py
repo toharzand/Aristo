@@ -138,13 +138,9 @@ def tender(tender):
                 print("response send from delete button")
                 try:
                     tender_to_delete = Tender.query.filter_by(tid=tender).first()
-                    print(tender_to_delete.tender_manager)
-                    print(current_user.id)
-                    if tender_to_delete.tender_manager != current_user.id:
-                        print("True - toy are here")
-                        flash("רק למנהל המכרז יש הרשאה למחיקה")
-                        # return redirect(url_for("main.tenders"))
-                        raise Exception
+                    if int(tender_to_delete.tender_manager) != current_user.id:
+                        print(f"{tender_to_delete.tender_manager != current_user.id} - toy are here")
+                        return redirect(url_for("main.tender",tender=tender_to_delete.tid))
                     tasks_relate_to_tender = Task.query.filter_by(tender_id=tender_to_delete.tid).all()
                     for task in tasks_relate_to_tender:
                         dependencies_to_delete = TaskDependency.query.filter_by(blocked = task.task_id).all()
@@ -344,6 +340,11 @@ def task(tid):
                 if request.form.get("delete"):
                     print("on delete")
                     task = Task.query.filter_by(task_id=tid).first()
+                    get_user = UserInTask.query.filter_by(task_id=tid,permissions='creator').first()
+                    print(current_user.id)
+                    print(get_user.user_id)
+                    if get_user.user_id != current_user.id:
+                        return redirect(url_for("main.task",tid=tid))
                     dependencies_to_delete = TaskDependency.query.filter_by(blocked = task.task_id).all()
                     dependencies_to_delete += TaskDependency.query.filter_by(blocking = task.task_id).all()
                     for depend in dependencies_to_delete:
@@ -417,13 +418,14 @@ def createDependency(task_id):
             depender_task_id = request.form['depender_task']
             x=aristo_engine.add_task(CreateTaskDependency(depender_task_id,task_id))
             if x.error_occurred():
-                print(str(x.get_data_once()))
+                if x.get_data_once() == "תלות זו קיימת. אנא בחרו משימה אחרת":
+                    flash(x.get_data_once())
                 flash("בחירה לא חוקית. ניסית ליצור תלות מעגלית!")
             else:
                 print(x.get_data_once())
                 return redirect(url_for("main.task", tid=task_id))
         except Exception as e:
-            raise e
+            flash("תלות זו כבר קיימת! אנא בחר משימה אחרת")
     task = Task.query.filter_by(task_id=task_id).first()
     tender = Tender.query.filter_by(tid=task.tender_id).first()
     print(tender)

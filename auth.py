@@ -77,3 +77,7 @@ def login_post():
 def logout():
     logout_user()
     return redirect(url_for('main.home'))
+
+
+if __name__ == '__main__':
+    pass

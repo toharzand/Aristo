@@ -544,7 +544,8 @@ class CreateTaskDependency:
             print("tasks dependency comitted")
         except Exception as e:
             db.session.rollback()
-            raise e
+            return f"תלות זו קיימת. אנא בחרו משימה אחרת"
+
         return f"dependency create successfully {self.blocking_id} -> {self.blocked_id}"
 
 class AddUserToTender(MFTask):
