@@ -8,6 +8,7 @@
   <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet" />
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+    {% block head %}{% endblock %}</head>
 
 <style>/* Add a black background color to the top navigation */
 .topnav {
@@ -76,20 +77,21 @@ body {
 <body>
 <header>
   <div class="topnav">
-  <a class="active" href="{{ url_for('main.home') }}">דף הבית</a>
-
     {% if current_user.is_authenticated %}
-    <a href="{{url_for('main.tenders')}}">המכרזים שלי</a>
-    <a href="{{url_for('main.tender_wizard')}}">אשף המכרזים</a>
-    <a href="{{ url_for('auth.logout') }}" class="navbar-item">יציאה</a>
+    <a href="{{get_url('main.tenders')}}" class="active">המכרזים שלי</a>
+    <a href="{{get_url('main.tender_wizard')}}">אשף המכרזים</a>
+    <a href="{{get_url('main.home')}}">עלינו</a>
+    <a href="{{ get_url('auth.logout') }}" class="navbar-item">יציאה</a>
     <a href="#settings" style="float: left">&#9881;</a>
-    <a href="{{ url_for('main.notification') }}" class="notification" style="float: left">
+    <a href="{{ get_url('main.notification') }}" class="notification" style="float: left">
   <span>
       שלום
       ,
       {{current_user.first_name}}
   </span>
-  <span class="badge">8</span>
+        {% if get_user_notification() > 0 %}
+  <span class="badge">{{ get_user_notification() }}</span>
+        {% endif %}
     <a>{% block navbar %}{% endblock %}</a>
 </a>
       {% endif %}
@@ -97,8 +99,9 @@ body {
     <span>התראות</span>
 
     {% if not current_user.is_authenticated %}
-    <a href="{{url_for('auth.login')}}">התחברות</a>
-    <a href="{{url_for('main.about')}}">עלינו</a>
+    <a class="active" href="{{ get_url('main.Welcome') }}">דף הבית</a>
+    <a href="{{get_url('auth.login',permission='viewer')}}">התחברות</a>
+    <a href="{{get_url('main.home')}}">עלינו</a>
     {% endif %}
 
 </div>

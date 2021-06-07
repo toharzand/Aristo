@@ -83,29 +83,67 @@ div {
 
 .button1 {background-color: #4CAF50;} /* Green */
 
+
+select {
+  width: 20%;
+  padding: 12px 20px;
+  margin: 8px 0;
+  display: inline-block;
+  border: 3px solid #ccc;
+  border-radius: 50px;
+  box-sizing: border-box;
+}
+
 </style>
   <form action="#" method="post">
       <div align="center" style="padding:10px">
         <h1 style="background-color: #f2f2f2;">🧙 ברוכים הבאים לאשף המכרזים  </h1>
           <h3 style="background-color: #f2f2f2;">הזינו את פרטי המכרז</h3>
-    <input type="text" id="tenders_committee_Type" name="tenders_committee_Type" placeholder="ועדת מכרזים" dir="rtl">
-    </div>
+
+<select dir="rtl" name="tenders_committee_Type" id="tenders_committee_Type">
+    <option value="" disabled selected>ועדת מכרזים</option>
+    {% for type in tenders_committee_Type_lst %}
+      <option value="{{type}}">{{ type }}</option>
+    {% endfor %}
+</select>
+</div>
+
 <div align="center">
     <input type="text" id="protocol" name="protocol" placeholder="מספר פרוטוקול" dir="rtl">
 </div>
+
 <div align="center">
-    <input type="text" id="department" name="department" placeholder="יחידה מקצועית" dir="rtl">
+    <select dir="rtl" name="department" id="department">
+    <option value="" disabled selected>יחידה מקצועית</option>
+    {% for dep in department_lst %}
+      <option value="{{dep}}">{{ dep }}</option>
+    {% endfor %}
+  </select>
 </div>
+
 <div align="center">
-    <input type="text" id="procedure_type" name="procedure_type" placeholder="סוג ההליך" dir="rtl">
+   <select dir="rtl" name="procedure_type" id="procedure_type">
+    <option value="" disabled selected>סוג ההליך</option>
+    {% for proc in procedure_type_lst %}
+      <option value="{{proc}}">{{ proc }}</option>
+    {% endfor %}
+  </select>
 </div>
 
 <div align="center">
       <input type="text" id="subject" name="subject" placeholder="נושא המכרז" dir="rtl">
 </div>
 <div align="center">
-        <input type="text" id="contact_user_from_department" name="contact_user_from_department" placeholder="גורם מטעם היחידה" dir="rtl">
+    <select dir="rtl" name="contact_user_from_department" id="contact_user_from_department">
+    <option value="" disabled selected>גורם מטעם היחידה</option>
+    {% for user in users %}
+      <option value="{{user.id}}">{{user.first_name}} {{user.last_name}}</option>
+    {% endfor %}
+  </select>
 </div>
+      <div align="center">
+          <input placeholder="תאריך סיום מכרז (אופציונלי)" type="text" onfocus="(this.type = 'date')"  id="finish_date" name="finish_date" dir="rtl">
+      </div>
 <div align="center">
     {% with messages = get_flashed_messages() %}
         {% if messages %}
@@ -123,7 +161,7 @@ div {
 
 <div style="margin-bottom:10px;">
 <form action="/action_page.php">
-      <button type="submit" formaction="\home" dir="rtl" class="button button1">חזרה לעמוד הבית</button>
+      <button type="submit" formaction="{{ get_url('main.home') }}" dir="rtl" class="button button1">חזרה לעמוד הבית</button>
 </form>
 </div>
 {% endblock %}

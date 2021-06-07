@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, url_for
 from flask_sqlalchemy import SQLAlchemy
 from datetime import timedelta
 from Workers import *
@@ -8,18 +8,26 @@ from flask_login import UserMixin
 
 
 
-app = Flask(__name__, template_folder='templates',
-            static_folder=r'C:\Users\itay dar\Desktop\projects\tender\hello_flask\git checker\aristo\templates')
-app.secret_key = "tenderly_secret_key"  # secret app for the session to keep data
-app.permanent_session_lifetime = timedelta(minutes=10)  # time untill user forced to log out
 
+application = Flask(__name__, template_folder='templates',
+            static_folder=r'C:\Users\User\Desktop\virtualEnv\templates')
+application.secret_key = "tenderly_secret_key"  # secret application for the session to keep data
+application.permanent_session_lifetime = timedelta(minutes=10)  # time untill user forced to log out
+
+
+application.config["SERVER_NAME"] = "icc.ise.bgu.ac.il"
+# # application.url_map.default_subdomain = "njsw21"
+application.config["APPLICATION_ROOT"] = "/njsw21"
+application.config["SCRIPT_NAME"] = "/njsw21"
+# with application.app_context():
+#     print(url_for("static", filename="test.txt", _external=True))
 '''
 config the connection to mysql database
 '''
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://itda:28031994@127.0.0.1:3306/aristodb'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-db = SQLAlchemy(app,session_options={"autoflush": False})  # create connection with database
+application.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://aristo:aristo@127.0.0.1:3306/aristo'
+application.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+db = SQLAlchemy(application,session_options={"autoflush": False})  # create connection with database
 
 
 
@@ -42,6 +50,7 @@ class User(UserMixin,db.Model):
     last_name = db.Column(db.String(50), nullable=False)
     email = db.Column(db.String(100), nullable=False, unique=True)
     password = db.Column(db.String(100), nullable=False)
+    is_gov = db.Column(db.Boolean, default=False, nullable=False)
     # todo references
     # contact_user = db.relationship('Tender', backref=db.backref('User'), lazy=True)
     # manager_tender = db.relationship('Tender', backref=db.backref('User'), lazy=True)
@@ -53,11 +62,12 @@ class User(UserMixin,db.Model):
     task_owner_user = db.relationship('Task', backref=db.backref('User'), lazy=True)
     user_in_tender = db.relationship('UserInTender', backref=db.backref('User'), lazy=True)
 
-    def __init__(self, first_name, last_name, email, password):
+    def __init__(self, first_name, last_name, email, password,is_gov):
         self.first_name = first_name
         self.last_name = last_name
         self.email = email
         self.password = password
+        self.is_gov = is_gov
 
 
 class Tender(db.Model):
@@ -100,7 +110,7 @@ class Tender(db.Model):
 
 
     def __init__(self, protocol_number, tenders_committee_Type, procedure_type, subject, department, start_date,
-                 finish_date, contact_user_from_department,tender_manager):
+                 finish_date, contact_user_from_department,tender_manager,is_milestone=False):
         self.protocol_number = protocol_number
         self.tenders_committee_Type = tenders_committee_Type
         self.procedure_type = procedure_type
@@ -133,7 +143,9 @@ class Task(db.Model):
     # status = db.Column(db.VARCHAR(50),db.CheckCostraint('status in ["open", "close", "blocked", "on progress"]'))  # todo
     status = db.Column(db.VARCHAR(50))
     subject = db.Column(db.VARCHAR(50))
-    description = db.Column(db.VARCHAR(120))
+    description = db.Column(db.VARCHAR(255))
+    is_milestone = db.Column(db.Boolean, default=False, nullable=False)
+
     # todo references
     task_users = db.relationship('UserInTask', backref='Tasks',cascade="all,delete", lazy=True)
     task_logs = db.relationship('TaskLog', backref='Tasks',cascade="all,delete", lazy=True)
@@ -141,7 +153,7 @@ class Task(db.Model):
     task_files = db.relationship('FileInTask', backref='Tasks',cascade="all,delete", lazy=True)
     notification_in_tasks = db.relationship('NotificationInTask',cascade="all,delete", backref='Tasks', lazy=True)
 
-    def __init__(self, tender_id,task_owner_id, odt, deadline, finish, status, subject, description):
+    def __init__(self, tender_id,task_owner_id, odt, deadline, finish, status, subject, description,is_milestone=False):
         self.tender_id = tender_id
         self.task_owner_id = task_owner_id
         self.odt = odt
@@ -150,6 +162,8 @@ class Task(db.Model):
         self.status = status
         self.subject = subject
         self.description = description
+        self.is_milestone = is_milestone
+
 
 
 class TaskLog(db.Model):
@@ -330,12 +344,14 @@ class TaskTemplate(db.Model):
     subject = db.Column(db.VARCHAR(100))
     description = db.Column(db.VARCHAR(500))
     time_delta = db.Column(db.Integer)
+    is_milestone = db.Column(db.Boolean, default=False, nullable=False)
 
-    def __init__(self, status, subject, description, time_delta):
+    def __init__(self, status, subject, description, time_delta,is_milestone=False):
         self.status = status
         self.subject = subject
         self.description = description
         self.time_delta = time_delta
+        self.is_milestone = is_milestone
 
 class TaskDependenciesTemplate(db.Model):
     """
@@ -419,35 +435,30 @@ class ContactNote(db.Model):
 
 
 
-class user(db.Model):
-    __tablename__ = "user"
-    id = db.Column(db.Integer,autoincrement=True,nullable=False,unique=True,primary_key=True)
-
-
-class depends(db.Model):
-    __tablename__ = "depends"
-    user_one_id = db.Column(db.Integer,db.ForeignKey('user.id'),primary_key=True)
-    user_two_id = db.Column(db.Integer,db.ForeignKey('user.id'),primary_key=True)
-    users_one = db.relationship("user",foreign_keys=[user_one_id],lazy=True)
-    users_two = db.relationship("user",foreign_keys=[user_two_id])
-
-    def __init__(self,user_one,user_two):
-        self.user_one_id = user_one
-        self.user_two_id = user_two
+# class depends(db.Model):
+#     __tablename__ = "depends"
+#     user_one_id = db.Column(db.Integer,db.ForeignKey('user.id'),primary_key=True)
+#     user_two_id = db.Column(db.Integer,db.ForeignKey('user.id'),primary_key=True)
+#     users_one = db.relationship("user",foreign_keys=[user_one_id],lazy=True)
+#     users_two = db.relationship("user",foreign_keys=[user_two_id])
+#
+#     def __init__(self,user_one,user_two):
+#         self.user_one_id = user_one
+#         self.user_two_id = user_two
 
 
 def get_db():
     return db
 
 def get_app():
-    return app
+    return application
 
 def get_my_sql_connection():
     try:
         connection = mysql.connector.connect(host="localhost",
-                                             user="itda",
-                                             passwd="28031994",
-                                             database="aristodb")
+                                             user="aristo",
+                                             passwd="aristo",
+                                             database="aristo")
 
         return connection
     except Error as e:
@@ -457,14 +468,22 @@ def get_my_sql_connection():
 
 
 if __name__ == '__main__':
-    pass
+    db = get_db()
+    db.create_all()
 
 
-    # db = get_db()
-    # db.drop_all()
-    # db.create_all()
-    # fill_db(30,db,User,Tender,Task,TaskLog,TaskNote,UserInTask)
-    # insert_tender_templates()
+
+
+
+
+
+
+
+
+
+    # # enter_fake_users_to_db(10,db,User)
+    # # fill_db(30,db,User,Tender,Task,TaskLog,TaskNote,UserInTask)
+    # insertTemplates()
     # insert_task_templates()
     # insert_task_dependencies()
 

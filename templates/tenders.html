@@ -125,12 +125,13 @@ input[type=submit]:hover {
 
     <th>לחץ לצפייה במכרז</th>
     <th>פרוטוקול מכרז</th>
+    <th>שלב המכרז</th>
       <th>סטטוס התקדמות</th>
     <th >ועדת מכרזים</th>
     <th>סוג ההליך</th>
     <th>נושא המכרז</th>
-    <th>מחלקה</th>
-    <th>איש קשר מטעם המחלקה</th>
+    <th>יחידה מקצועית</th>
+    <th>גורם מטעם היחידה</th>
     <th>מנהל המכרז</th>
     <th>תאריך התחלה</th>
       <th>תאריך סיום משוער</th>
@@ -143,25 +144,26 @@ input[type=submit]:hover {
             <button type="submit" name="user"  value="{{values[i][10]}}" align="center" id="{{values[i][10]}}" class="button button1" style="color:#e2e2e2">&#128994;</button>
         </td>
         <td>{{values[i][0]}}</td>
-                    {% if values[i][9] < 7 %}
-        <td class="progress-bar progress-bar-success" role="progressbar" aria-valuenow="95"
-  aria-valuemin="0" aria-valuemax="100" style="width:95%" align="right">
-            95%
+        <td>{{values[i][12]}}</td>
+     {% if  values[i][11] < 25 %}
+        <td class="progress-bar progress-bar-danger" role="progressbar" aria-valuenow="{{ values[i][11] }}"
+  aria-valuemin="0" aria-valuemax="100" style="width:{{ values[i][11] }}%" align="right">
+            &emsp;
         </td>
-    {% elif values[i][9] > 7 and values[i][9] < 20 %}
-                <td class="progress-bar progress-bar-info" role="progressbar" aria-valuenow="70"
-  aria-valuemin="0" aria-valuemax="100" style="width:70%">
-            70%
+    {% elif values[i][11] > 25 and values[i][11] < 50 %}
+                <td class="progress-bar progress-bar-warning" role="progressbar" aria-valuenow="{{ values[i][11] }}"
+  aria-valuemin="0" aria-valuemax="100" style="width:{{ values[i][11] }}%">
+            {{ values[i][11] }}%
         </td>
-    {% elif values[i][9] > 20 and values[i][9] < 25 %}
-                <td class="progress-bar progress-bar-warning" role="progressbar" aria-valuenow="40"
-  aria-valuemin="0" aria-valuemax="100" style="width:40%">
-            40%
+    {% elif values[i][11] > 50 and values[i][11] < 75 %}
+                <td class="progress-bar progress-bar-info" role="progressbar" aria-valuenow="{{ values[i][11] }}"
+  aria-valuemin="0" aria-valuemax="100" style="width:{{ values[i][11] }}%">
+            {{ values[i][11] }}%
         </td>
     {% else %}
-                <td class="progress-bar progress-bar-danger" role="progressbar" aria-valuenow="20"
-  aria-valuemin="0" aria-valuemax="100" style="width:20%">
-            10%
+                <td class="progress-bar progress-bar-success" role="progressbar" aria-valuenow="{{ values[i][11] }}"
+  aria-valuemin="0" aria-valuemax="100" style="width:{{ values[i][11] if values[i][11]<=100 else 100 }}%">
+            {{ values[i][11] }}%
         </td>
         {% endif %}
         <td>{{values[i][1]}}</td>
@@ -177,6 +179,9 @@ input[type=submit]:hover {
     </tr>
 {% endfor %}
 </table>
+    {% if len == 0 %}
+        <h3>אין כעת מכרזים להצגה עבורך. ניתן ליצור מכרז חדש או לבקש ממנהל/ת מכרז קיים להכניסך למכרז</h3>
+    {% endif %}
 </div>
 </form>
 

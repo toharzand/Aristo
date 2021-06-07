@@ -207,7 +207,7 @@ a{color:inherit;text-decoration:none}
 </style>
 <p>&nbsp;</p>
 <form action="#" method="post">
-<div class="login-wrap" align="right">
+<div class="login-wrap" align="right" style="margin-bottom:10px;">
 	<div class="login-html" align="right">
 		<input id="tab-1" type="radio" name="tab" value="sign-in" class="sign-in" checked><label for="tab-1" class="tab" dir="rtl">התחברות</label>
 		<input id="tab-2" type="radio" name="tab" value="sign-up" class="sign-up"><label for="tab-2" class="tab" dir="rtl">הרשמה</label>
@@ -231,28 +231,20 @@ a{color:inherit;text-decoration:none}
 				</div>
 				<div class="hr"></div>
 				<div class="foot-lnk">
-					<a href="#forgot" style="color:black" >?שחכת סיסמא</a>
+					<a href=" {{ get_url('main.home') }}" style="color:black" >?שחכת סיסמא</a>
 				</div>
 				<p>&nbsp;</p>
 
-	{% with messages = get_flashed_messages() %}
+		{% with messages = get_flashed_messages() %}
         {% if messages %}
             {% for msg in messages %}
-                <p align="center">{{msg}}</p>
+                <p align="center" style="font-size:16px;color:white;">{{msg}}</p>
             {% endfor %}
         {% endif %}
     {% endwith %}
 
 			</div>
 			<div class="sign-up-htm">
-	{% with messages = get_flashed_messages() %}
-        {% if messages %}
-            {% for msg in messages %}
-                <p align="center">{{msg}}</p>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
-
 				<div class="group">
 					<label for="first_name" class="label" >שם פרטי</label>
 					<input id="first_name" name="first_name" type="text" class="input">
@@ -276,11 +268,20 @@ a{color:inherit;text-decoration:none}
 				<div class="hr"></div>
 
 				<div class="group">
-					<input type="submit" class="button" value="הרשמה">
+					<input type="submit" class="button" value="הרשמה" style="margin-bottom:10px;">
 				</div>
+							{% with messages = get_flashed_messages() %}
+        {% if messages %}
+            {% for msg in messages %}
+                <p align="center" style="font-size:16px;color:black;">{{msg}}</p>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
 		</div>
 	</div>
 </div>
+
 </form>
 
 {% endblock %}

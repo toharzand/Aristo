@@ -4,6 +4,8 @@ import threading
 import datetime as dt
 import time
 # from __init__ import flask_main_run
+import sys
+import traceback
 
 
 def get_futures():
@@ -95,8 +97,9 @@ def aristo_process_runner(process_name, queue, shutdown_event, cond, flags, futu
                 try:
                     print(f"processing task - {type(t).__name__}")
                     data = t.process()
-                except Exception as e:
-                    data = e
+                except:
+                    exc = Exception("".join(traceback.format_exception(*sys.exc_info())))
+                    data = exc
                 if task_id in futures.keys():  # if not responsive then we don't care for the response
                     response = futures[task_id]
                     response.set_data(data)

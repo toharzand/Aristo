@@ -44,7 +44,6 @@
 </style>
 
 <form action="#" method="post">
-
 <div class="container" dir="rtl" align="right" style="margin-left:400px;float:right;overflow:scroll; height:800px;">
     <div class="row">
         <div class="col-md-12 col-lg-8">
@@ -86,10 +85,34 @@
                                             </td>
                                             <!-- Message -->
                                             <td>
-                                                <a class="link" href="#" >
-                                                    <span class="badge badge-pill text-white font-medium badge-danger mr-2">{{item[4]}}</span>
-                                                    <span class="text-dark" name="notification" value="{{item[5]}}">{{item[3]}}</span>
-                                                </a>
+                                                {% if item[2] == False %}
+                                                    {% if item[4] == 'משימה' %}
+                                                    <a class="link" href="{{ get_url('main.markAsRead',nid=item[5]) }}" >
+                                                        <span class="badge badge-pill text-white font-medium badge-danger mr-2">{{item[4]}}</span>
+                                                        <b>
+                                                        <span class="text-dark" name="notification" value="{{item[5]}}">{{item[3]}}</span>
+                                                        </b>
+                                                    </a>
+                                                    {% else %}
+                                                    <a class="link" href="{{ get_url('main.home') }}" >
+                                                        <span class="badge badge-pill text-white font-medium badge-danger mr-2">{{item[4]}}</span>
+                                                        <span class="text-dark" name="notification" value="{{item[5]}}">{{item[3]}}</span>
+                                                    </a>
+                                                    {% endif %}
+                                                {% else %}
+                                                    {% if item[4] == 'משימה' %}
+                                                    <a class="link" href="{{ get_url('main.markAsRead',nid=item[5]) }}" >
+                                                        <span class="badge badge-pill text-white font-medium badge-danger mr-2">{{item[4]}}</span>
+                                                        <span class="text-dark" name="notification" value="{{item[5]}}">{{item[3]}}</span>
+                                                    </a>
+                                                    {% else %}
+                                                    <a class="link" href="{{ get_url('main.home') }}" >
+                                                        <span class="badge badge-pill text-white font-medium badge-danger mr-2">{{item[4]}}</span>
+                                                        <span class="text-dark" name="notification" value="{{item[5]}}">{{item[3]}}</span>
+                                                    </a>
+                                                    {% endif %}
+                                                {% endif %}
+
                                             </td>
                                             <!-- Attachment -->
                                             <td><i class="fa fa-paperclip text-muted"></i></td>

@@ -1,12 +1,14 @@
 from EmailHandler import *
 import time
-try:
-    from models import *
-except Exception as e:
-    print("couldn't import aristoDB")
+# try:
+import models
+# from models import db
+# except Exception as e:
+#     print(e)
 from datetime import datetime,timedelta
 import engine2_0
-
+from flask_login import current_user
+# import models
 
 def flatten(lst, i=0):
     if lst is None:
@@ -98,41 +100,41 @@ class DeleteTenderDependencies(MFTask):
     def process(self, engine=None):
         print("here - in the engine. starts to delete items")
         # delete related tasks
-        for task in Task.query.filter_by(tender_id=self.tid).all():
+        for task in models.Task.query.filter_by(tender_id=self.tid).all():
 
             task_id = task.task_id
 
-            for task_note in TaskNote.query.filter_by(task_id=task_id).all():
+            for task_note in models.TaskNote.query.filter_by(task_id=task_id).all():
                 try:
                     print("start deleting task notes")
-                    db.session.delete(task_note)
-                    db.session.commit()
+                    models.db.session.delete(task_note)
+                    models.db.session.commit()
                     print("succuusfully delete task notes")
                 except Exception as e:
-                    db.session.rollback()
+                    models.db.session.rollback()
 
-            for task_log in TaskLog.query.filter_by(task_id=task_id).all():
+            for task_log in models.TaskLog.query.filter_by(task_id=task_id).all():
                 try:
-                    db.session.delete(task_log)
-                    db.session.commit()
+                    models.db.session.delete(task_log)
+                    models.db.session.commit()
                     print("succuusfully delete task logs")
                 except:
-                    db.session.rollback()
+                    models.db.session.rollback()
 
-            for user_in_task in UserInTask.query.filter_by(task_id=task_id).all():
+            for user_in_task in models.UserInTask.query.filter_by(task_id=task_id).all():
                 try:
-                    db.session.delete(user_in_task)
-                    db.session.commit()
+                    models.db.session.delete(user_in_task)
+                    models.db.session.commit()
                     print("succuusfully delete user_in_task")
                 except:
-                    db.session.rollback()
+                    models.db.session.rollback()
 
             try:
-                db.session.delete(task)
-                db.session.commit()
+                models.db.session.delete(task)
+                models.db.session.commit()
                 print("task deleted")
             except Exception as e:
-                db.session.rollback()
+                models.db.session.rollback()
                 print(e)
 
 
@@ -147,13 +149,13 @@ class addNotificationTender(MFTask):
 
     def process(self, engine=None):
         try:
-            notification = Notification(user_id=self.user_id,status=False,subject=self.subject,type=self.type,created_time=self.created_time)
-            db.session.add(notification)
-            db.session.commit()
+            notification = models.Notification(user_id=self.user_id,status=False,subject=self.subject,type=self.type,created_time=self.created_time)
+            models.db.session.add(notification)
+            models.db.session.commit()
         except Exception as e:
-            db.session.rollback()
+            models.db.session.rollback()
             print(e)
-        conn = get_my_sql_connection()
+        conn = models.get_my_sql_connection()
         cursor = conn.cursor()
         query = """select nid
                     from notifications
@@ -163,13 +165,13 @@ class addNotificationTender(MFTask):
         cursor.execute(query)
         nid = cursor.fetchone()[0]
         print(nid)
-        notification_tender = NotificationInTender(nid,self.tender)
+        notification_tender = models.NotificationInTender(nid,self.tender)
         try:
-            db.session.add(notification_tender)
-            db.session.commit()
+            models.db.session.add(notification_tender)
+            models.db.session.commit()
         except Exception as e:
             print(e)
-            db.session.rollback()
+            models.db.session.rollback()
 
 class addNotificationTask(MFTask):
     def __init__(self,task,subject,user_id,type):
@@ -183,13 +185,13 @@ class addNotificationTask(MFTask):
     def process(self, engine=None):
         print("adding new task notification")
         try:
-            notification = Notification(user_id=self.user_id,status=False,subject=self.subject,type=self.type,created_time=self.created_time)
-            db.session.add(notification)
-            db.session.commit()
+            notification = models.Notification(user_id=self.user_id,status=False,subject=self.subject,type=self.type,created_time=self.created_time)
+            models.db.session.add(notification)
+            models.db.session.commit()
         except Exception as e:
-            db.session.rollback()
+            models.db.session.rollback()
             raise e
-        conn = get_my_sql_connection()
+        conn = models.get_my_sql_connection()
         cursor = conn.cursor()
         query = """select nid
                     from notifications
@@ -198,13 +200,13 @@ class addNotificationTask(MFTask):
                 """
         cursor.execute(query)
         nid = cursor.fetchone()
-        notification_task = NotificationInTask(nid[0],self.task)
+        notification_task = models.NotificationInTask(nid[0],self.task)
         try:
-            db.session.add(notification_task)
-            db.session.commit()
+            models.db.session.add(notification_task)
+            models.db.session.commit()
         except Exception as e:
             print(e)
-            db.session.rollback()
+            models.db.session.rollback()
 
 
 class addUserToTask(MFTask):
@@ -218,18 +220,18 @@ class addUserToTask(MFTask):
     def process(self, engine=None):
         try:
             print("raise notification")
-            db.session.add(Notification(self.user_id,0,"הוסיפו אותך למשימה",self.type,created_time=self.created_time))
-            db.session.commit()
+            models.db.session.add(models.Notification(self.user_id,0,"הוסיפו אותך למשימה",self.type,created_time=self.created_time))
+            models.db.session.commit()
         except:
-            db.session.rollback()
+            models.db.session.rollback()
         try:
-            nid = Notification.query.order_by(Notification.nid.desc()).first()
+            nid = models.Notification.query.order_by(models.Notification.nid.desc()).first()
             print(nid)
-            db.session.add(NotificationInTask(nid.nid,self.task_id))
-            db.session.commit()
+            models.db.session.add(models.NotificationInTask(nid.nid,self.task_id))
+            models.db.session.commit()
             print("new task notification added")
         except Exception as e:
-            db.session.rollback()
+            models.db.session.rollback()
             print("cannot enter task notification")
             print(e)
 
@@ -246,16 +248,16 @@ class addNotificationsChat(MFTask):
     def process(self, engine=None):
         try:
             print(f"raise notification - someone send massage in chat - task number {self.task_id}")
-            for user_in_task in UserInTask.query.filter_by(task_id=self.task_id):
-                db.session.add(Notification(user_in_task.user_id,0,"יש הודעה חדשה בצ'אט",self.type,self.created_time))
-                db.session.commit()
+            for user_in_task in models.UserInTask.query.filter_by(task_id=self.task_id):
+                models.db.session.add(models.Notification(user_in_task.user_id,0,"יש הודעה חדשה בצ'אט",self.type,self.created_time))
+                models.db.session.commit()
                 # print("commited - new chat notification")
-                nid = Notification.query.order_by(Notification.nid.desc()).first()
-                db.session.add(NotificationInTask(nid.nid,task_id=self.task_id))
-                db.session.commit()
+                nid = models.Notification.query.order_by(models.Notification.nid.desc()).first()
+                models.db.session.add(models.NotificationInTask(nid.nid,task_id=self.task_id))
+                models.db.session.commit()
             print("data commited succssfully")
         except Exception as e:
-            db.session.rollback()
+            models.db.session.rollback()
             print("session rolled back! - cannot enter notifications")
             print(e)
             raise e
@@ -265,7 +267,7 @@ class UpdateTaskStatus(MFTask):
     def __init__(self,task_id,user_id,status):
         super().__init__()
         self.task_id = task_id
-        self.user = User.query.filter_by(id=user_id).first()
+        self.user = models.User.query.filter_by(id=user_id).first()
         self.status = status
         self.init_time = datetime.now()
         self.cursor = None
@@ -292,33 +294,40 @@ class UpdateTaskStatus(MFTask):
         lst_of_all_blocked = self.cursor.fetchall()
         for blocked_id in flatten(lst_of_all_blocked):
             if self.should_advance(blocked_id)[0]:
-                current_task = Task.query.filter_by(task_id=blocked_id).first()
-                current_task.status = "פתוח"
+                current_task = models.Task.query.filter_by(task_id=blocked_id).first()
                 name = f"{self.user.first_name} {self.user.last_name}"
-                description = f"{name} השלים את המשימה החוסמת {self.task_id} ובכך שינה את סטטוס המשימה הנוכחית ל-פתוח"
-                changeStatusLog = TaskLog(self.user.id, blocked_id, self.init_time, description)
-                db.session.add(changeStatusLog)
+                if current_task.is_milestone:
+                    current_task.status = "פתוח"
+                    models.db.session.commit()
+                    update_milestone = UpdateTaskStatus(current_task.task_id,self.user.id,"הושלם")
+                    update_milestone.process()
+                    description = f"{name} השלים את המשימה {self.task_id} ובכך השלים את אבן הדרך"
+                else:
+                    current_task.status = "פתוח"
+                    description = f"{name} השלים את המשימה החוסמת {self.task_id} ובכך שינה את סטטוס המשימה הנוכחית ל-פתוח"
+                changeStatusLog = models.TaskLog(self.user.id, blocked_id, self.init_time, description)
+                models.db.session.add(changeStatusLog)
 
     def process(self, engine=None):
         print("start process")
-        conn = get_my_sql_connection()
+        conn = models.get_my_sql_connection()
         self.cursor = conn.cursor()
-        current_task = Task.query.filter_by(task_id=self.task_id).first()
-        if current_task.status == "חסום":
-            raise Exception(f"cannot advanced this task because it blocked by other task")
+        current_task = models.Task.query.filter_by(task_id=self.task_id).first()
+        # if current_task.status == "חסום":
+        #     raise Exception(f"cannot advanced this task because it blocked by other task")
         current_task.status = self.status
         name = f"{self.user.first_name} {self.user.last_name}"
         description = f"{name} שינה את סטטוס המשימה" + " " + f"ל-{self.status}"
         print(description)
         if self.status == "הושלם":
             self.update_dependencies()
-        changeStatusLog = TaskLog(self.user.id,self.task_id,self.init_time,description)
+        changeStatusLog = models.TaskLog(self.user.id,self.task_id,self.init_time,description)
         try:
-            db.session.add(changeStatusLog)
-            db.session.commit()
+            models.db.session.add(changeStatusLog)
+            models.db.session.commit()
             print("status changed - log committed")
         except Exception as e:
-            db.session.rollback()
+            models.db.session.rollback()
             print("there was problem with logging the status change")
             print(e)
 
@@ -326,7 +335,7 @@ class UpdateTaskStatus(MFTask):
 class LogNewTask(MFTask):
     def __init__(self,user_id):
         super().__init__()
-        self.user = User.query.filter_by(id=user_id).first()
+        self.user = models.User.query.filter_by(id=user_id).first()
         self.init_time = datetime.now()
 
     def process(self, engine=None):
@@ -335,7 +344,7 @@ class LogNewTask(MFTask):
         description =  f"{name} הוסיף משימה חדשה " + " " + f"{self.init_time.hour}:{self.init_time.minute} {self.init_time.date()} "
         print(description)
         try:
-            conn = get_my_sql_connection()
+            conn = models.get_my_sql_connection()
             cursor = conn.cursor()
             query = f"""select task_id from tasks
                         order by task_id desc
@@ -345,13 +354,13 @@ class LogNewTask(MFTask):
             print(task_id)
         except Exception as e:
             print(f"not able to fetch because: {e}")
-        createTaskLog = TaskLog(self.user.id,task_id,self.init_time,description)
+        createTaskLog = models.TaskLog(self.user.id,task_id,self.init_time,description)
         try:
-            db.session.add(createTaskLog)
-            db.session.commit()
+            models.db.session.add(createTaskLog)
+            models.db.session.commit()
             print("task registered - log commited")
         except Exception as e:
-            db.session.rollback()
+            models.db.session.rollback()
             print("there was problem with logging the task registered")
             raise e
 
@@ -367,10 +376,10 @@ class AddVisitorNote(MFTask):
     def process(self,engine=None):
         visitor_note = ContactNote(self.email,self.name,self.msg,self.time_created)
         try:
-            db.session.add(visitor_note)
-            db.session.commit()
+            models.db.session.add(visitor_note)
+            models.db.session.commit()
         except Exception as e:
-            db.session.rollback()
+            models.db.session.rollback()
             print(e)
         
 
@@ -422,13 +431,13 @@ class HeartBeat(MFTask):
 #         #create the dependency
 #         try:
 #             dependency = TaskDependency(blocking=self.depender_task_id,blocked=self.task_id)
-#             db.session.add(dependency)
-#             db.session.commit()
+#             models.db.session.add(dependency)
+#             models.db.session.commit()
 #             print(f"db created - between depender - {self.depender_task_id} and dependee - {self.task_id}")
 #         except Exception as e:
 #             print(e)
 #             print("rolled back due to duplication")
-#             db.session.rollback()
+#             models.db.session.rollback()
 
 
 
@@ -468,9 +477,9 @@ class CreateTaskDependency:
     def __init__(self, blocking, blocked):
         self.blocked_id = blocked
         self.blocking_id = blocking
-        # self.con = get_my_sql_connection()
+        # self.con = models.get_my_sql_connection()
         self.cursor = None
-        self.number_of_iterations = TaskDependency.query.count()
+        self.number_of_iterations = models.TaskDependency.query.count()
         self.g = {}
 
     def check_for_circle(self, current):
@@ -518,7 +527,7 @@ class CreateTaskDependency:
 
     def process(self):
         print("inside proccess of create task depend")
-        con = get_my_sql_connection()
+        con = models.get_my_sql_connection()
         self.cursor = con.cursor()
         # ----- option A: check for circle with DFS algorithm - safer and more informative but slightly slower -----
         conc = str(self.blocking_id)
@@ -535,15 +544,15 @@ class CreateTaskDependency:
         #     print(e)
         #     raise e
         print("no circle found - try to create taskDep obj")
-        task_dependency = TaskDependency(blocked=self.blocked_id, blocking=self.blocking_id)
+        task_dependency = models.TaskDependency(blocked=self.blocked_id, blocking=self.blocking_id)
         print(task_dependency.blocked,task_dependency.blocking)
         try:
             print("trying to add to db dependencies")
-            db.session.add(task_dependency)
-            db.session.commit()
+            models.db.session.add(task_dependency)
+            models.db.session.commit()
             print("tasks dependency comitted")
         except Exception as e:
-            db.session.rollback()
+            models.db.session.rollback()
             return f"תלות זו קיימת. אנא בחרו משימה אחרת"
 
         return f"dependency create successfully {self.blocking_id} -> {self.blocked_id}"
@@ -556,14 +565,14 @@ class AddUserToTender(MFTask):
         self.uid = uid
 
     def process(self, engine=None):
-        user_in_tender = UserInTender(tender_id=self.tid,user_id=uid)
+        user_in_tender = models.UserInTender(tender_id=self.tid, user_id=self.uid)
         try:
             print("start add user to tender")
-            db.session.add(user_in_tender)
-            db.session.commit()
+            models.db.session.add(user_in_tender)
+            models.db.session.commit()
             print("user register to tender succusfully")
         except Exception as e:
-            db.session.rollback()
+            models.db.session.rollback()
             print(e)
 
 class AddUserTask(MFTask):
@@ -574,16 +583,16 @@ class AddUserTask(MFTask):
         self.password = password
 
     def process(self, engine=None):
-        db = get_db()
+        db = models.get_db()
         success = True
         try:
-            orm_user = User(self.first_name, self.last_name, self.email, self.password)
-            db.session.add(orm_user)
-            db.session.commit()
+            orm_user = models.User(self.first_name, self.last_name, self.email, self.password)
+            models.db.session.add(orm_user)
+            models.db.session.commit()
         except Exception as e:
             success = False
             print(e)
-            get_db().session.rollback()
+            models.get_db().session.rollback()
             print("user adding denied", print(self))
         if success:
             cont = f"""
@@ -608,90 +617,120 @@ class AddUserTask(MFTask):
 
 
 class CreateTenderFromTemplate(MFTask):
-    def __init__(self, template_id, contact_user, subject,protocol):
+    '''
+        @Name : CreateTenderFromTemplate
+        @Do: create new tender from template, including all the attached tasks that come as default in every tender.
+        @ Param:
+                template_id - tender template id.
+                contact_user - the contact user from the department which responsible on the tender
+                subject = the subject of the tender
+                protocol: protocol number of the tender
+    '''
+
+    def __init__(self, template_id, contact_user, subject,protocol,finish_date, tender_manager):
         self.template_id = template_id
-        self.opening_date = datetime.now()
+        self.opening_date = datetime.now().date()
         self.contact_user = contact_user
-        self.contact_user = self.get_contact_id()
+        self.tender_manager = tender_manager
+        # self.contact_user = self.get_contact_id()
         self.subject = subject
         self.protocol = protocol
+        self.finish_date = finish_date if finish_date != "" else datetime.now().date()
+        print(f"the finish date got set to: {self.finish_date}")
         self.cur = None
 
 
     def get_contact_id(self):
+        """
+        @Do: extract the contact user from department id.
+        :return: User object that match to the self.contact_user parameter.
+        """
         n = self.contact_user.split(" ")
-        return User.query.filter_by(first_name=n[0],last_name=n[1]).first().id
+        print(n)
+        return models.User.query.filter_by(first_name=n[0],last_name=n[1]).first().id
 
     def create_template_from_tender_BFS(self, real_tender_id):
+        """
+        @Do: fetch all the task templates from the database and create personal instance of them
+                attached with the created tender.
+        """
+
         graph = {}  # {task_template_id : {color:(0=white, 1=grey, 2=black), task_real_id:()}}
 
         q = []
 
-        self.cur.excecute(f"""
+        #  todo  - incorrect query! we should seek for dependee_id where depender_id = 0. we should add it to the db
+        self.cur.execute(f"""
             SELECT dependee_id
             FROM TasksDependenciesTemplate
-            WHERE tender_id = {self.template_tender_id} and depender_id = null
+            WHERE tender_id = {self.template_id} and depender_id = 0
             """)  # return list of all beginner tasks for the tender template
         lst_of_first_tasks_of_tender = self.cur.fetchall()
         for row in lst_of_first_tasks_of_tender:
-            real_depender_id, real_depender_deadline, insertion_succeeded = self.create_real_task_from_template_task(real_tender_id, row[0], self.opening_date)  # teder_id , task_template
+            real_depender_id, real_depender_deadline = self.create_real_task_from_template_task(real_tender_id, row[0], self.opening_date)  # tender_id , task_template
             q.append((row[0], real_depender_id, real_depender_deadline))
             graph[str(row[0])] = {"color":1, "real_task_id":real_depender_id}  # painting the vertex
 
         while len(q) != 0:
             template_depender_id, real_depender_id, real_depender_deadline = q.pop(0)  # getting (task template id , task real id, task deadline)
-            self.cur.excecute(f"""
-            SELECT dependee_id
-            FROM TasksDependenciesTemplate
+            self.update_deadline(real_depender_deadline)
+            self.cur.execute(f"""
+            SELECT distinct dependee_id
+            FROM aristo.TasksDependenciesTemplate
             WHERE depender_id = {template_depender_id}
-            """)  # = [(dependee1_id), (dependee1_id), (depender2_id)...])
+            """)  # = [(dependee1_id), (dependee2_id), (depender3_id)...])
             lst_of_template_dependees = self.cur.fetchall()
             for row in lst_of_template_dependees:
                 if str(row[0]) in graph.keys():
                     if graph[str(row[0])]["color"] == 1:
                         #  if color == 1 then we should only
                         #  update its depender but not create it
-                        self.add_blocked_to_blocking(graph[row[0]]["real_task_id"], real_depender_id)
+                        self.add_blocked_to_blocking(graph[str(row[0])]["real_task_id"], real_depender_id)
                         continue
                     if graph[str(row[0])]["color"] == 2:
                         raise Exception(f"an insolvable circle was found: {row[0]}, {template_depender_id}")
                         # continue
-                real_dependee_id, real_dependee_deadline, insertion_succeeded = self.create_real_task_from_template_task(real_tender_id, row[0], real_depender_deadline)
+                real_dependee_id, real_dependee_deadline = self.create_real_task_from_template_task(real_tender_id, row[0], real_depender_deadline)
                 self.add_blocked_to_blocking(real_dependee_id, real_depender_id)
                 q.append((row[0], real_dependee_id, real_dependee_deadline))
-                graph[str(row[0])]["color"] = 1
+                graph[str(row[0])] = {"color": 1, "real_task_id": real_dependee_id}
             graph[str(template_depender_id)]["color"] = 2
 
     def process(self):
-        conn = get_my_sql_connection()
-        self.cur = conn.cursor()
-        real_tender_id = self.create_real_tender_from_template()
-        self.create_template_from_tender_BFS(real_tender_id)
-        db.session.commit()
+        try:
+            conn = models.get_my_sql_connection()
+            self.cur = conn.cursor()
+            real_tender_id = self.create_real_tender_from_template()
+            self.create_template_from_tender_BFS(real_tender_id)
+            real_tender = models.Tender.query.filter_by(tid=real_tender_id).first()
+            if real_tender.finish_date.date() == real_tender.start_date.date():
+                print("finish is start")
+                real_tender.finish_date = self.finish_date
+            # possible to set finish date from template tasks!! to enable for now
+            # models.Tender.query.filter_by(tid=real_tender_id).first().finish_date = self.finish_date
+            models.db.session.commit()
+            print("\ntender successfully created from template\n")
+        except Exception as e:
+            models.db.session.rollback()
+            raise e
 
     def create_real_tender_from_template(self):
         "should return a real empty tender id (to fill later on with real tasks from template)"
-        # todo - Itay
         print("create_real_tender_from_template")
-        tender = TenderTemplate.query.filter_by(tid=self.template_id).first()
+        tender = models.TenderTemplate.query.filter_by(tid=self.template_id).first()
+        new_tender = models.Tender(self.protocol,tender.tenders_committee_Type,tender.procedure_type,
+                            self.subject,department=tender.department,start_date=datetime.now(),finish_date=self.finish_date,
+                            contact_user_from_department=self.contact_user,tender_manager=self.tender_manager)
 
-        try:
-            new_tender = Tender(self.protocol,tender.tenders_committee_Type,tender.procedure_type,
-                                self.subject,department=tender.department,start_date=datetime.now(),finish_date=None,
-                                contact_user_from_department=self.contact_user,tender_manager=self.contact_user)
-
-            db.session.add(new_tender)
-            db.session.commit()
-        except Exception as e:
-            db.session.rollback()
-            raise e
+        models.db.session.add(new_tender)
+        models.db.session.commit()
 
         query = """select tid from tenders
                     order by tid desc
                     limit 1"""
         self.cur.execute(query)
-        print(self.cur.fetchone()[0])
-        print("create_real_tender_from_template - finish")
+        # print("got here 1")
+        # print(self.cur.fetchone()[0])
         return self.cur.fetchone()[0]
 
 
@@ -703,40 +742,37 @@ class CreateTenderFromTemplate(MFTask):
         WHERE task_id = {template_task_id}
         """)
         task_attributes = self.cur.fetchall()
+        temp_task = models.TaskTemplate.query.filter_by(task_id = template_task_id).first()
         attributes = {
             "tender_id": real_tender_id,
             "odt": opening_date,
-            "deadline": self.get_date_from_timedelta(opening_date, task_attributes[0][3]),
+            "deadline": self.get_date_from_timedelta(opening_date, task_attributes[0][4]),
             "finish": None,
-            "status": task_attributes[0][0],
-            "subject": task_attributes[0][1],
-            "description": task_attributes[0][2],
+            "status": task_attributes[0][1],
+            "subject": task_attributes[0][2],
+            "description": task_attributes[0][3],
+            "task_owner_id": self.contact_user,
+            "is_milestone": temp_task.is_milestone
         }
-        try:
-            #  todo - validate attributes for the real task
-            task = Task(**attributes)  # create real task from the template output
-            db.session.add(task)
-            db.session.commit()
-            success = True
-        except Exception as e:
-            success = False
-            print(e)
-            get_db().session.rollback()
-            print("task adding denied", print(f"real_tender_id {real_tender_id} | template_task_id {template_task_id}"))
-            self.con.close()
-        return task.task_id, attributes["deadline"], success
+        task = models.Task(**attributes)  # create real task from the template output
+        models.db.session.add(task)
+        models.db.session.commit()
+        tid = models.Task.query.order_by(models.Task.task_id.desc()).first().task_id
+        return tid, attributes["deadline"]
 
 
     def add_blocked_to_blocking(self, real_dependee_id, real_depender_id):
-        try:
-            task_dependency = TaskDependency(real_dependee_id, real_depender_id)
-            self.db.session.add(task_dependency)
-            db.session.commit()
-        except Exception as e:
-            print(e)
-            get_db().session.rooback()
-            print(f"task dependancy insertion denied - depender {real_depender_id} | dependee {real_dependee_id}")
+        task_dependency = models.TaskDependency(real_dependee_id, real_depender_id)
+        models.db.session.add(task_dependency)
+            # print(f"task dependancy insertion denied - depender {real_depender_id} | dependee {real_dependee_id}")
+        # print(f"task_dependency added:  \nblocking - {task_dependency.blocking}\nblocked - {task_dependency.blocked}")
 
+    def update_deadline(self, later_date):
+        # print(later_date,"\t|\t", self.finish_date)
+        if isinstance(self.finish_date, str):
+            self.finish_date = datetime.strptime(self.finish_date, "%Y-%m-%d").date()
+        if later_date > self.finish_date:
+            self.finish_date = later_date
 
     def get_date_from_timedelta(self, opening_date, days_delta):
         """
@@ -744,8 +780,64 @@ class CreateTenderFromTemplate(MFTask):
         :param days_delta: the amount of days that a task should be taken to handle
         :return: datetime obj with the right deadline for a task
         """
+        # print(f"opening date - {type(opening_date)} {opening_date}")
+        # print(f"timedelta - {type(opening_date +timedelta(days_delta))} {opening_date +timedelta(days_delta)}")
+        # print(f"check in get_date_from_timedelta: given open: {opening_date} \t|\t given delta: {days_delta}\n\t output: {opening_date + timedelta(days_delta)}")
         return opening_date + timedelta(days_delta)
 
+class GetQueueOfMilestones(MFTask):
+    def __init__(self, tender_id):
+        self.tender_id = tender_id
+        self.cursor = None
+        self.g = {}
+        self.result = []
+
+    def DFS(self,current_id):
+        self.g[str(current_id)] = 1
+        query = f"""SELECT blocked
+                            FROM TasksDependencies
+                            WHERE blocking = {current_id}"""
+        self.cursor.execute(query)
+        current_all_children = flatten(self.cursor.fetchall())
+        # print(f"current_all_children {current_all_children}")
+        for child in current_all_children:
+            str_child = str(child)
+            if str_child not in self.g.keys():
+                self.g[str_child] = 0
+            if self.g[str_child] == 0:
+                self.DFS(child)
+        self.g[str(current_id)] = 2
+        task, is_milestone = self.is_milestone(current_id)
+        if is_milestone:
+            self.result.append(task)
+        return
+
+
+    def topological_sort(self):
+        query = f"""
+        SELECT task_id
+        FROM tasks
+        WHERE tender_id = {self.tender_id}
+        """
+        conn = models.get_my_sql_connection()
+        self.cursor = conn.cursor()
+        self.cursor.execute(query)
+        all_tasks = flatten(self.cursor.fetchall())
+        for task_id in all_tasks:
+            if str(task_id) not in self.g.keys():
+                self.DFS(task_id)
+        self.result.reverse()
+
+    def is_milestone(self, task_id):
+        task = models.Task.query.filter_by(task_id=task_id).first()
+        if task.is_milestone:
+            return task, True
+        return None, False
+
+
+    def process(self):
+        self.topological_sort()
+        return self.result
 
 class GetTendersPageRespons(MFTask):
     def __init__(self,request,db):
@@ -754,3 +846,60 @@ class GetTendersPageRespons(MFTask):
 
     def process(self, engine=None):
         return self.request.form['user']
+
+class addMileStone(MFTask):
+    def __init__(self,cur_user):
+        self.user = cur_user
+        self.cursor = None
+
+    def get_tenders(self):
+        query = f"""SELECT distinct tender_id FROM aristo.usersintasks as u
+                    inner join tasks t
+                    on u.task_id=t.task_id
+                    where user_id={current_user.id};"""
+        tenders_for_user = models.Tender.query.filter_by(tender_manager=current_user.id).all()
+        tenders_for_user += models.Tender.query.filter_by(contact_user_from_department=current_user.id).all()
+        self.cursor.execute(query)
+        res = [i[0] for i in self.cursor.fetchall()]
+        my_lst = []
+
+        for tender_id in res:
+            my_lst.append(models.Tender.query.filter_by(tid=tender_id).first())
+
+        my_lst += tenders_for_user
+        return list(set(my_lst))
+
+
+    def process(self, engine=None):
+        conn = models.get_my_sql_connection()
+        self.cursor = conn.cursor()
+        tenders = self.get_tenders()
+        milestones = []
+
+        for tender in tenders:
+            complete_tasks = models.Task.query.filter_by(status="הושלם", tender_id=tender.tid).all()
+            milestone = ""
+            if len(complete_tasks) == len(models.Task.query.filter_by(tender_id=tender.tid).all()) and len(complete_tasks) > 0:
+                milestone = "מכרז הושלם"
+            else:
+                res = aristo_engine.add_task(GetQueueOfMilestones(tender.tid), now=True)
+                if res.error_occurred():
+                    raise res.get_data_once()
+                lst_of_milestones = res.get_data_once()
+                if len(lst_of_milestones) == 0:
+                    milestone = "לא הוגדרו אבני דרך"
+                else:
+                    for i, ms in enumerate(lst_of_milestones):
+                        if ms.status == "הושלם":
+                            continue
+                        else:
+                            milestone = ms.subject
+                            break
+            milestones.append(milestone)
+        return milestones
+
+
+if __name__ == '__main__':
+    lst_of_milestones = GetQueueOfMilestones(46).process()
+    for ms in lst_of_milestones:
+        print(ms.description)
