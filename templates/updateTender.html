@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+{% block title %}tender{% endblock %}
+
+{% block content %}
+
+
+
+<style>
+
+input[type=date] {
+  width: 20%;
+  padding: 12px 20px;
+  margin: 8px 0;
+  display: inline-block;
+  border: 3px solid #ccc;
+  border-radius: 50px;
+  box-sizing: border-box;
+}
+
+input[type=email] {
+  width: 20%;
+  padding: 12px 20px;
+  margin: 8px 0;
+  display: inline-block;
+  border: 3px solid #ccc;
+  border-radius: 50px;
+  box-sizing: border-box;
+}
+input[type=text] {
+  width: 20%;
+  padding: 12px 20px;
+  margin: 8px 0;
+  display: inline-block;
+  border: 3px solid #ccc;
+  border-radius: 50px;
+  box-sizing: border-box;
+}
+input[type=password] {
+  width: 20%;
+  padding: 12px 20px;
+  margin: 8px 0;
+  display: inline-block;
+  border: 3px solid #ccc;
+  border-radius: 50px;
+  box-sizing: border-box;
+}
+
+input[type=submit] {
+  width: 25%;
+  background-color: #4CAF50;
+  color: white;
+  padding: 14px 20px;
+  margin: 8px 0;
+  border: none;
+  border-radius: 30px;
+  cursor: pointer;
+   font-size: 16px;
+
+}
+
+input[type=submit]:hover {
+  background-color: #45a049;
+}
+
+div {
+  background-color: #f2f2f2;
+  padding: 0px;
+
+}
+
+.button {
+  border: none;
+  color: white;
+  padding: 15px 32px;
+  text-align: center;
+  text-decoration: none;
+  display: block;
+  font-size: 16px;
+  margin: auto;
+  cursor: pointer;
+  border-radius: 50px
+}
+
+.button1 {background-color: #4CAF50;} /* Green */
+
+
+select {
+  width: 20%;
+  padding: 12px 20px;
+  margin: 8px 0;
+  display: inline-block;
+  border: 3px solid #ccc;
+  border-radius: 50px;
+  box-sizing: border-box;
+}
+
+</style>
+  <form action="#" method="post">
+    <div align="center" style="padding:10px">
+        <h3 style="background-color: #f2f2f2;">ערכו את פרטי המכרז</h3>
+    <input type="text" id="protocol_number" name="protocol_number" placeholder="{{ tender.protocol_number }}" dir="rtl">
+    <input type="text" id="tenders_committee_Type" name="tenders_committee_Type" placeholder="{{ tender.tenders_committee_Type }}" dir="rtl">
+    <input type="text" id="procedure_type" name="procedure_type" placeholder="{{ tender.procedure_type }}" dir="rtl">
+</div>
+<div align="center">
+    <input type="text" id="subject" name="subject" placeholder="{{ tender.subject }}" dir="rtl">
+    <input type="text" id="department" name="department" placeholder="{{ tender.department }}" dir="rtl">
+    <select dir="rtl" name="contact_user_from_department" id="contact_user_from_department">
+    <option value="" disabled selected>{{ names[0] }}</option>
+    {% for user in users %}
+      <option value="{{user.id}}">{{user.first_name}} {{user.last_name}}</option>
+    {% endfor %}
+  </select>
+
+    <script type="text/javascript">
+      function passMultipleUsers(){
+        var names = {{x}}
+      }
+    </script>
+
+</div>
+<div align="center">
+    <input placeholder="{{ tender.start_date }}" type="text" onfocus="(this.type = 'date')"  id="finish_date" name="finish_date" dir="rtl">
+     <input placeholder="{{ tender.finish_date }}" type="text" onfocus="(this.type = 'date')"  id="start_date" name="start_date" dir="rtl">
+      <select dir="rtl" name="tender_manager" id="tender_manager">
+    <option value="" disabled selected>{{ names[1] }}</option>
+    {% for user in users %}
+      <option value="{{user.id}}">{{user.first_name}} {{user.last_name}}</option>
+    {% endfor %}
+  </select>
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            {% for msg in messages %}
+                <p align="center" style="font-size:16">{{msg}}</p>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+</div>
+
+<div align="center" dir="rtl">
+      <input type="submit" value="עדכן מכרז" align="center">
+</div>
+  </form>
+<form action="/action_page.php">
+      <button type="submit" formaction="{{ get_url('main.home') }}" dir="rtl" class="button button1">חזרה לעמוד הבית</button>
+</form >
+</div>
+
+
+
+
+{% endblock %}

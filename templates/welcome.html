@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}Welcome{% endblock %}
+{% block content %}
+
+<style>
+.container {
+  position: relative;
+  width: 33%;
+  display: inline-block;
+  margin-top:100px;
+  margin-left:200px;
+}
+
+.image {
+  opacity: 0.7;
+  display: inline-block;
+  width: 100%;
+  height: auto;
+  transition: .5s ease;
+  backface-visibility: hidden;
+  margin: 150px,0px,0px,250px;
+  border-radius: 10%;
+
+}
+
+.middle {
+  transition: .5s ease;
+  opacity: 0.8;
+  position: absolute;
+  top: 62%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  -ms-transform: translate(-50%, -50%);
+  text-align: center;
+}
+
+.container:hover .image {
+  opacity: 0.3;
+}
+
+.container:hover .middle {
+  opacity: 1;
+}
+
+.text {
+  color: white;
+  text-decoration: inherit;
+  font-size: 50px;
+  padding: 32px 32px;
+}
+
+.text:hover {
+  text-decoration: inherit;
+  color: #4CAF50;
+}
+</style>
+<div class="container">
+  <p>&nbsp;</p>
+  <p>&nbsp;</p>
+  <p>&nbsp;</p>
+  <p>&nbsp;</p>
+  <a href="{{ get_url('auth.login',permission='gov') }}">
+  <img src="templates/img/grass.JPG" alt="Avatar" class="image" style="width:100%">
+  <div class="middle">
+    <div class="text">משרד המשפטים</div>
+    </a>
+  </div>
+</div>
+
+<div class="container">
+  <p>&nbsp;</p>
+  <p>&nbsp;</p>
+  <p>&nbsp;</p>
+  <p>&nbsp;</p>
+  <a href="{{ get_url('auth.login',permission='viewer') }}">
+  <img src="templates/img/grass.JPG" alt="Avatar" class="image" style="width:100%">
+  <div class="middle">
+    <div class="text">אורחים</div>
+    </a>
+  </div>
+</div>
+
+
+{% endblock %}
